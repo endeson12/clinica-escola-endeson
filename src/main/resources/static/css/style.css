@@ -109,6 +109,7 @@ h1, h2, h3 { margin: 0 0 .4rem; line-height: 1.2; }
 }
 .senha-wrap button:focus-visible { outline: none; box-shadow: var(--foco); }
 .linha { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.linha--data-status { grid-template-columns: 1fr; gap: 0; }
 .check { display: flex; align-items: center; gap: 8px; font-weight: 500; }
 .check input { width: 18px; height: 18px; }
 

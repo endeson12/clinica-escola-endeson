@@ -4,8 +4,8 @@
 
 Sistema web interno para gerenciar **pacientes, especialidades e atendimentos** em duas unidades universitárias (UNINASSAU Jóquei e UNINASSAU Redenção).
 
-- **Aplicação publicada:** __URL_PROD__
-- **Repositório:** __URL_REPO__
+- **Aplicação publicada:** https://clinica-escola-endeson.vercel.app
+- **Repositório:** https://github.com/endeson12/clinica-escola-endeson (privado)
 
 ## Funcionalidades entregues
 
