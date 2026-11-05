@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Atendimentos | Clínica-Escola</title>
+  <meta name="robots" content="noindex">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<header class="topo">
+  <div class="marca"><span class="marca__icone"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3v18M3 12h18" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"/></svg></span> Clínica-Escola</div>
+  <div class="topo__dir">
+    <span class="chip-unidade" id="chip-unidade">...</span>
+    <span class="topo__usuario" id="nome-usuario"></span>
+    <button class="btn btn--sair" id="btn-sair" type="button">Sair</button>
+  </div>
+</header>
+<nav class="nav" aria-label="Navegação principal">
+  <ul>
+      <li><a href="/dashboard.html">Início</a></li>
+      <li><a href="/pacientes.html">Pacientes</a></li>
+      <li><a href="/especialidades.html">Especialidades</a></li>
+      <li><a href="/atendimentos.html" class="ativo" aria-current="page">Atendimentos</a></li>
+  </ul>
+</nav>
+<main class="conteudo">
+  <div class="cabecalho-pagina">
+    <div><h1>Atendimentos</h1><p>Atendimentos registrados na unidade atual.</p></div>
+  </div>
+  <div class="grade">
+    <section class="card" aria-labelledby="t-form">
+      <h2 id="t-form">Novo atendimento</h2>
+      <div id="alerta" class="alerta alerta--erro" role="alert"></div>
+      <form id="form" novalidate>
+        <div class="campo" data-campo="pacienteId">
+          <label for="pacienteId">Paciente</label>
+          <select id="pacienteId" name="pacienteId" required><option value="">Carregando...</option></select>
+          <div class="msg-erro"></div>
+        </div>
+        <div class="campo" data-campo="especialidadeId">
+          <label for="especialidadeId">Especialidade</label>
+          <select id="especialidadeId" name="especialidadeId" required><option value="">Carregando...</option></select>
+          <div class="msg-erro"></div>
+        </div>
+        <div class="linha">
+          <div class="campo" data-campo="dataHora">
+            <label for="dataHora">Data e horário</label>
+            <input id="dataHora" name="dataHora" type="datetime-local" required>
+            <div class="msg-erro"></div>
+          </div>
+          <div class="campo" data-campo="status">
+            <label for="status">Status</label>
+            <select id="status" name="status" required>
+              <option value="AGENDADO">Agendado</option>
+              <option value="REALIZADO">Realizado</option>
+              <option value="CANCELADO">Cancelado</option>
+            </select>
+            <div class="msg-erro"></div>
+          </div>
+        </div>
+        <div class="campo" data-campo="observacoes">
+          <label for="observacoes">Observações <span class="opc">(opcional)</span></label>
+          <textarea id="observacoes" name="observacoes" maxlength="1000" placeholder="Informações administrativas. Não registre dados clínicos."></textarea>
+          <div class="msg-erro"></div>
+        </div>
+        <button class="btn btn--primario btn--bloco" type="submit"><span class="spinner" aria-hidden="true"></span><span class="rotulo">Registrar atendimento</span></button>
+      </form>
+    </section>
+    <section class="card" aria-labelledby="t-lista">
+      <div class="card__topo"><h2 id="t-lista">Atendimentos registrados</h2><span class="contador" id="contador"></span></div>
+      <div class="tabela-wrap">
+        <table class="responsiva">
+          <thead><tr><th>Data e hora</th><th>Paciente</th><th>Especialidade</th><th>Status</th><th>Unidade</th></tr></thead>
+          <tbody id="lista"><tr><td colspan="5" class="vazio">Carregando...</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</main>
+<footer class="rodape-interno">Clínica-Escola · Projeto acadêmico demonstrativo · Não utilize dados reais</footer>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<script src="/js/api.js"></script>
+<script src="/js/layout.js"></script>
+<script src="/js/atendimentos.js"></script>
+</body>
+</html>

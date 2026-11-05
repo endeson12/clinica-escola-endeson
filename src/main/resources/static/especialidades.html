@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Especialidades | Clínica-Escola</title>
+  <meta name="robots" content="noindex">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<header class="topo">
+  <div class="marca"><span class="marca__icone"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3v18M3 12h18" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"/></svg></span> Clínica-Escola</div>
+  <div class="topo__dir">
+    <span class="chip-unidade" id="chip-unidade">...</span>
+    <span class="topo__usuario" id="nome-usuario"></span>
+    <button class="btn btn--sair" id="btn-sair" type="button">Sair</button>
+  </div>
+</header>
+<nav class="nav" aria-label="Navegação principal">
+  <ul>
+      <li><a href="/dashboard.html">Início</a></li>
+      <li><a href="/pacientes.html">Pacientes</a></li>
+      <li><a href="/especialidades.html" class="ativo" aria-current="page">Especialidades</a></li>
+      <li><a href="/atendimentos.html">Atendimentos</a></li>
+  </ul>
+</nav>
+<main class="conteudo">
+  <div class="cabecalho-pagina">
+    <div><h1>Especialidades</h1><p>Somente especialidades ativas aparecem para novos atendimentos.</p></div>
+  </div>
+  <div class="grade">
+    <section class="card" aria-labelledby="t-form">
+      <h2 id="t-form">Nova especialidade</h2>
+      <div id="alerta" class="alerta alerta--erro" role="alert"></div>
+      <form id="form" novalidate>
+        <div class="campo" data-campo="nome">
+          <label for="nome">Nome da especialidade</label>
+          <input id="nome" name="nome" maxlength="100" placeholder="Ex.: Fisioterapia" required>
+          <div class="msg-erro"></div>
+        </div>
+        <div class="campo" data-campo="descricao">
+          <label for="descricao">Descrição <span class="opc">(opcional)</span></label>
+          <textarea id="descricao" name="descricao" maxlength="500"></textarea>
+          <div class="msg-erro"></div>
+        </div>
+        <div class="campo" data-campo="ativa">
+          <label for="ativa">Situação</label>
+          <select id="ativa" name="ativa">
+            <option value="true">Ativa</option>
+            <option value="false">Inativa</option>
+          </select>
+          <div class="msg-erro"></div>
+        </div>
+        <button class="btn btn--primario btn--bloco" type="submit"><span class="spinner" aria-hidden="true"></span><span class="rotulo">Cadastrar especialidade</span></button>
+      </form>
+    </section>
+    <section class="card" aria-labelledby="t-lista">
+      <div class="card__topo"><h2 id="t-lista">Especialidades cadastradas</h2><span class="contador" id="contador"></span></div>
+      <div class="tabela-wrap">
+        <table class="responsiva">
+          <thead><tr><th>Nome</th><th>Descrição</th><th>Situação</th></tr></thead>
+          <tbody id="lista"><tr><td colspan="3" class="vazio">Carregando...</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</main>
+<footer class="rodape-interno">Clínica-Escola · Projeto acadêmico demonstrativo · Não utilize dados reais</footer>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<script src="/js/api.js"></script>
+<script src="/js/layout.js"></script>
+<script src="/js/especialidades.js"></script>
+</body>
+</html>

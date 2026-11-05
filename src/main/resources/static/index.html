@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Entrar | Clínica-Escola</title>
+  <meta name="robots" content="noindex">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<main class="login">
+  <section class="login__brand" aria-label="Apresentação">
+    <div>
+      <div class="marca"><span class="marca__icone"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3v18M3 12h18" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"/></svg></span> Clínica-Escola</div>
+      <h1>Gestão de pacientes, especialidades e atendimentos.</h1>
+      <p>Sistema interno da Clínica-Escola para as unidades universitárias Jóquei e Redenção.</p>
+      <ul class="login__lista">
+        <li>Cadastro de pacientes com validação de CPF</li>
+        <li>Especialidades ativas para novos atendimentos</li>
+        <li>Atendimentos registrados por unidade</li>
+      </ul>
+    </div>
+    <span class="demo-tag">Projeto acadêmico demonstrativo</span>
+  </section>
+
+  <section class="login__form-wrap">
+    <div class="login__card">
+      <h2>Acesse sua conta</h2>
+      <p class="sub">Informe a unidade e suas credenciais.</p>
+
+      <div id="alerta" class="alerta alerta--erro" role="alert"></div>
+
+      <form id="form-login" novalidate>
+        <div class="campo" data-campo="unidadeId">
+          <label for="unidade">Unidade</label>
+          <select id="unidade" name="unidadeId" required>
+            <option value="">Carregando unidades...</option>
+          </select>
+          <div class="msg-erro" aria-live="polite"></div>
+        </div>
+        <div class="campo" data-campo="email">
+          <label for="email">E-mail</label>
+          <input id="email" name="email" type="email" autocomplete="username" placeholder="nome@exemplo.com" required>
+          <div class="msg-erro" aria-live="polite"></div>
+        </div>
+        <div class="campo" data-campo="senha">
+          <label for="senha">Senha</label>
+          <div class="senha-wrap">
+            <input id="senha" name="senha" type="password" autocomplete="current-password" required>
+            <button type="button" id="toggle-senha" aria-controls="senha" aria-pressed="false">Mostrar</button>
+          </div>
+          <div class="msg-erro" aria-live="polite"></div>
+        </div>
+        <button class="btn btn--primario btn--bloco" type="submit" id="btn-entrar">
+          <span class="spinner" aria-hidden="true"></span><span class="rotulo">Entrar</span>
+        </button>
+      </form>
+      <p class="login__rodape">Ambiente de demonstração, sem vínculo com sistemas oficiais. Não utilize dados reais.</p>
+    </div>
+  </section>
+</main>
+<script src="/js/api.js"></script>
+<script src="/js/auth.js"></script>
+</body>
+</html>

@@ -1,0 +1,20 @@
+# Imagem usada pela Vercel (Container runtime). Tambem roda localmente com Docker.
+# 1) build com JDK 21 + Maven Wrapper
+FROM eclipse-temurin:21-jdk AS build
+WORKDIR /app
+COPY .mvn .mvn
+COPY mvnw pom.xml ./
+RUN chmod +x mvnw && ./mvnw -q -B dependency:go-offline
+COPY src src
+RUN ./mvnw -q -B -DskipTests package && cp target/clinica-escola-*.jar app.jar
+
+# 2) execucao somente com JRE 21
+FROM eclipse-temurin:21-jre
+WORKDIR /app
+COPY --from=build /app/app.jar app.jar
+# A Vercel encaminha o trafego para a porta 80 (ou para PORT, se definida)
+ENV PORT=80 \
+    COOKIE_SECURE=true \
+    JAVA_TOOL_OPTIONS="-XX:MaxRAMPercentage=75 -XX:TieredStopAtLevel=1 -XX:+UseSerialGC"
+EXPOSE 80
+ENTRYPOINT ["java", "-jar", "app.jar"]
