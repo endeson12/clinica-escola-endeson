@@ -1,0 +1,55 @@
+name: Java 21 e PostgreSQL — baseline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: java-postgres-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    container:
+      image: maven:3.9.11-eclipse-temurin-21@sha256:6fdc855a6ed81d288ca7ca37ac6ff5e9308b612485c0801d70b25a858c83d237
+    services:
+      postgres:
+        image: postgres:17-alpine@sha256:742f40ea20b9ff2ff31db5458d127452988a2164df9e17441e191f3b72252193
+        env:
+          POSTGRES_DB: portal_ci
+          POSTGRES_USER: portal_test
+          # Fixture descartável de CI; não é credencial institucional/produção.
+          POSTGRES_PASSWORD: portal_test
+        options: >-
+          --health-cmd "pg_isready -U portal_test -d portal_ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      JDBC_DATABASE_URL: jdbc:postgresql://postgres:5432/portal_ci
+      DB_USERNAME: portal_test
+      DB_PASSWORD: portal_test
+      JAVA_TOOL_OPTIONS: -XX:ActiveProcessorCount=2 -Xmx512m -Djava.net.preferIPv4Stack=true
+    steps:
+      - name: Checkout sem persistir credenciais
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Compilar, testar e empacotar
+        run: mvn -B -ntp verify
+      - name: Preservar relatórios de testes
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: junit-java21-postgres
+          path: target/surefire-reports/
+          if-no-files-found: warn
+          retention-days: 14
