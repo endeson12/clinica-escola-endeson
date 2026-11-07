@@ -8,10 +8,21 @@ Plano aprovado pelo PO em 06/11/2026, mensagem Discord 1568368824573755444. Refe
 |---|---|---|---|
 | Endeson Marcell | PO/Scrum Master: requisitos, prioridades, backlog, critérios de aceite e apresentação | `endeson12` | Conta do titular confirmada pelo repositório; decisões recebidas no canal do projeto |
 | Eduardo | Desenvolvimento: backend Java, API, modelagem de dados, migrações e regras de negócio | `fduduu` — confirmado pelo PO | Frente designada; issues #2/#4/#7/#8 atribuídas à conta. Autoria ou execução só serão registradas quando acontecerem |
-| Leônidas | Desenvolvimento: frontend, responsividade, acessibilidade, usabilidade e integração das telas | `ldevloper` — confirmado pelo PO | Frente designada; convite de escrita pendente de aceite. Autoria ou execução só serão registradas quando acontecerem |
+| Leônidas | Desenvolvimento: frontend, responsividade, acessibilidade, usabilidade e integração das telas | `ldevloper` — confirmado pelo PO | Acesso de escrita confirmado e issues #6/#7/#8 atribuídas; aceite do convite feito por automação autorizada. Não implica execução humana de código |
 | LEM | Assistência de IA: implementação assistida, integração, automação de testes e relatos verificáveis | Não representa uma conta pessoal de integrante | Executora dos incrementos assistidos identificados nas PRs e atualizações |
 
-Associação confirmada pelo PO na mensagem Discord **1568446040775065691**: **Eduardo = `fduduu`; Leônidas = `ldevloper`**. Readback de acessos: Eduardo é colaborador com escrita; Leônidas ainda tem convite pendente. Registrar a designação de Leônidas no quadro sem declarar aceite ou atribuição formal à conta antes da confirmação remota. Não usar tokens expostos nem publicar como outra pessoa. Convite e assignee não comprovam trabalho realizado.
+Associação confirmada pelo PO na mensagem Discord **1568446040775065691**: **Eduardo = `fduduu`; Leônidas = `ldevloper`**. Em 07/11, ambas as contas tiveram identidade e escrita verificadas. O convite de Leônidas foi aceito por automação autorizada e as atribuições #6/#7/#8 foram relidas. Convite e assignee não comprovam execução humana. A equipe foi descrita pelo titular como profissional, desenvolvendo para uma instituição; o domínio educacional do produto não transforma a execução em exercício escolar.
+
+## Contas designadas e automação autorizada
+
+Autorização posterior do titular: mensagem Discord **1568683698180849827** e confirmação de propriedade das contas. Usar a conta designada para push/PR e atualização da respectiva frente: backend/dados com `fduduu`; frontend/usabilidade com `ldevloper`; decisões de produto/integração com `endeson12`. Não dividir commits artificialmente para inflar participação.
+
+- Credenciais disponíveis apenas na integração privada da VPS, fora deste repositório, em `~/.hermes/secrets/github-clinica-equipe.json` (permissão 0600). Não copiar o arquivo, imprimir seu conteúdo, gravar em remote Git ou executar login global do `gh`.
+- Ler somente a conta necessária em memória; passar `GH_TOKEN` apenas ao subprocesso da operação e restringir endpoints/remoto a `endeson12/clinica-escola-endeson`. Validar `/user` e permissão de escrita antes de publicar. Falha exige bloqueio explícito; não trocar silenciosamente de identidade.
+- Chaves foram expostas originalmente no chat: o titular autorizou seu uso ciente do risco; substituição por credenciais restritas segue recomendada. Não expor tokens em logs, código, PR ou comentário.
+- Código executado por IA deve ter autoria LEM e identificação explícita de automação no commit/PR. A conta que envia a PR identifica o responsável operacional, não prova que a pessoa escreveu manualmente.
+- Não produzir aprovações fictícias entre contas, simular revisão humana, alterar datas ou acessar outros repositórios/serviços. Preservar trabalhos/PRs concorrentes.
+
 
 ## Divisão inicial do backlog
 
@@ -21,7 +32,7 @@ Associação confirmada pelo PO na mensagem Discord **1568446040775065691**: **E
 - Financeiro/carteirinha, Eduardo no backend e Leônidas na interface: #8.
 - Disponibilidade/integração e execução assistida, LEM: #1 e tarefas de baseline.
 
-Essa divisão NÃO transfere autoria de commits. O campo de responsável planejado é separado do assignee confirmado e do executor real de cada entrega. Até os logins serem confirmados, não atribuir tarefas às contas de terceiros por inferência.
+Essa divisão NÃO transfere autoria de commits. O campo de responsável é separado do executor real de cada entrega. As identidades e as atribuições estão confirmadas; futuras mudanças de integrantes exigem confirmação do titular, não inferência.
 
 ## Fluxo de entrega
 
