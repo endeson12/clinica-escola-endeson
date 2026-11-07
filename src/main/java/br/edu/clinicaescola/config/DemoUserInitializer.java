@@ -29,27 +29,30 @@ public class DemoUserInitializer implements ApplicationRunner {
     private final UsuarioRepository usuarios;
     private final UnidadeRepository unidades;
     private final PasswordEncoder encoder;
+    private final org.springframework.jdbc.core.JdbcTemplate jdbc;
 
     @Value("${app.demo.admin.email:}") private String adminEmail;
     @Value("${app.demo.admin.password:}") private String adminSenha;
     @Value("${app.demo.recepcao.email:}") private String recepEmail;
     @Value("${app.demo.recepcao.password:}") private String recepSenha;
 
-    public DemoUserInitializer(UsuarioRepository usuarios, UnidadeRepository unidades, PasswordEncoder encoder) {
+    public DemoUserInitializer(UsuarioRepository usuarios, UnidadeRepository unidades, PasswordEncoder encoder,
+                               org.springframework.jdbc.core.JdbcTemplate jdbc) {
         this.usuarios = usuarios;
         this.unidades = unidades;
         this.encoder = encoder;
+        this.jdbc = jdbc;
     }
 
     @Override
     @Transactional
     public void run(ApplicationArguments args) {
-        garantir("Administrador Demonstrativo", adminEmail, adminSenha, unidades.findAll());
+        garantir("Administrador Demonstrativo", adminEmail, adminSenha, unidades.findAll(), "ADMIN");
         unidades.findByCodigo("JOQUEI").ifPresent(j ->
-                garantir("Recepção Jóquei (demo)", recepEmail, recepSenha, List.of(j)));
+                garantir("Recepção Jóquei (demo)", recepEmail, recepSenha, List.of(j), "RECEPCAO"));
     }
 
-    private void garantir(String nome, String email, String senha, List<Unidade> acesso) {
+    private void garantir(String nome, String email, String senha, List<Unidade> acesso, String perfil) {
         if (email == null || email.isBlank() || senha == null || senha.isBlank()) {
             log.warn("Usuario demo '{}' nao configurado (variaveis de ambiente ausentes).", nome);
             return;
@@ -63,7 +66,12 @@ public class DemoUserInitializer implements ApplicationRunner {
         u.setAtivo(true);
         u.getUnidades().clear();
         u.getUnidades().addAll(acesso);
-        usuarios.save(u);
+        usuarios.saveAndFlush(u);
+        for (Unidade unidade : acesso) {
+            jdbc.update("insert into academico_perfis(usuario_id,unidade_id,perfil) values(?,?,?) "
+                    + "on conflict(usuario_id,unidade_id) do update set perfil=excluded.perfil",
+                    u.getId(), unidade.getId(), perfil);
+        }
         log.info("Usuario demo '{}' pronto com acesso a {} unidade(s).", nome, acesso.size());
     }
 }

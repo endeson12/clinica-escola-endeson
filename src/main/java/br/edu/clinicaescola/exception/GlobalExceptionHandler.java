@@ -47,6 +47,13 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiError> generico(Exception ex) {
+        if (ex instanceof org.springframework.web.servlet.resource.NoResourceFoundException) {
+            return erro(HttpStatus.NOT_FOUND, "Recurso não encontrado.", Map.of());
+        }
+        if (ex instanceof org.springframework.web.method.annotation.MethodArgumentTypeMismatchException
+                || ex instanceof org.springframework.web.bind.MissingServletRequestParameterException) {
+            return erro(HttpStatus.BAD_REQUEST, "Parâmetro inválido ou ausente.", Map.of());
+        }
         log.error("Erro inesperado", ex);
         return erro(HttpStatus.INTERNAL_SERVER_ERROR, "Erro interno. Tente novamente.", Map.of());
     }

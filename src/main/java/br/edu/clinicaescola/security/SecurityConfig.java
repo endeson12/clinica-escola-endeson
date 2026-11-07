@@ -38,7 +38,8 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http, SecurityContextRepository repo,
-                                           br.edu.clinicaescola.repository.UsuarioRepository usuarios) throws Exception {
+                                           br.edu.clinicaescola.repository.UsuarioRepository usuarios,
+                                           br.edu.clinicaescola.portal.PortalAccess portalAccess) throws Exception {
         // CSRF: token em cookie legivel pelo JS (XSRF-TOKEN) e enviado no cabecalho X-XSRF-TOKEN
         CsrfTokenRequestAttributeHandler csrfHandler = new CsrfTokenRequestAttributeHandler();
         csrfHandler.setCsrfRequestAttributeName(null); // gera o cookie ja na primeira requisicao
@@ -49,6 +50,8 @@ public class SecurityConfig {
                 .csrfTokenRequestHandler(csrfHandler))
             .securityContext(s -> s.securityContextRepository(repo))
             .addFilterBefore(new SessaoAtivaFilter(usuarios),
+                    org.springframework.security.web.access.intercept.AuthorizationFilter.class)
+            .addFilterBefore(new br.edu.clinicaescola.portal.PortalClinicalFilter(portalAccess),
                     org.springframework.security.web.access.intercept.AuthorizationFilter.class)
             .authorizeHttpRequests(a -> a
                 .requestMatchers("/", "/index.html", "/css/**", "/js/**", "/img/**", "/favicon.ico", "/error").permitAll()
