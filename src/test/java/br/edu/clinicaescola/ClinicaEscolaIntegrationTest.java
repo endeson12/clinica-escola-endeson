@@ -45,6 +45,33 @@ class ClinicaEscolaIntegrationTest {
     }
 
     @Test
+    void loginRenovaCsrfESessaoRejeitaCabecalhoAntigo() throws Exception {
+        Cookie antes = mvc.perform(get("/api/auth/csrf"))
+                .andExpect(status().isOk()).andReturn().getResponse().getCookie("XSRF-TOKEN");
+        String credenciais = "{\"unidadeId\":" + unidade("JOQUEI")
+                + ",\"email\":\"admin.teste@clinica.local\",\"senha\":\"SenhaTeste#123\"}";
+        mvc.perform(post("/api/auth/login").contentType("application/json").content(credenciais))
+                .andExpect(status().isForbidden());
+        MvcResult autenticado = mvc.perform(post("/api/auth/login").cookie(antes)
+                        .header("X-XSRF-TOKEN", antes.getValue())
+                        .contentType("application/json").content(credenciais))
+                .andExpect(status().isOk())
+                .andExpect(cookie().maxAge("XSRF-TOKEN", 0)).andReturn();
+        Cookie sessao = autenticado.getResponse().getCookie("CLINICA_SESSION");
+        Cookie depois = mvc.perform(get("/api/auth/csrf").cookie(sessao))
+                .andExpect(status().isOk()).andReturn().getResponse().getCookie("XSRF-TOKEN");
+        org.junit.jupiter.api.Assertions.assertNotEquals(antes.getValue(), depois.getValue());
+        mvc.perform(post("/api/auth/logout").cookie(sessao, depois)
+                        .header("X-XSRF-TOKEN", antes.getValue()))
+                .andExpect(status().isForbidden());
+        mvc.perform(get("/api/auth/me").cookie(sessao)).andExpect(status().isOk());
+        mvc.perform(post("/api/auth/logout").cookie(sessao, depois)
+                        .header("X-XSRF-TOKEN", depois.getValue()))
+                .andExpect(status().isNoContent());
+        mvc.perform(get("/api/auth/me").cookie(sessao)).andExpect(status().isUnauthorized());
+    }
+
+    @Test
     void fluxoCompletoComIsolamentoPorUnidade() throws Exception {
         Long joquei = unidade("JOQUEI");
         Long redencao = unidade("REDENCAO");
