@@ -20,6 +20,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * Roda somente quando JDBC_DATABASE_URL estiver definido (veja README).
  */
 @SpringBootTest(properties = {
+        "app.test.suite=clinica-csrf",
         "app.demo.admin.email=admin.teste@clinica.local",
         "app.demo.admin.password=SenhaTeste#123",
         "app.demo.recepcao.email=recepcao.teste@clinica.local",
