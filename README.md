@@ -2,10 +2,25 @@
 
 > **Projeto acadêmico demonstrativo.** Sem vínculo com sistemas oficiais da instituição. Não utilize dados reais de pacientes.
 
-Sistema web interno para gerenciar **pacientes, especialidades e atendimentos** em duas unidades universitárias (UNINASSAU Jóquei e UNINASSAU Redenção).
+Portal independente com gestão acadêmica, ambiente de aprendizagem e gestão clínica separada por perfil e unidade. Os cadastros demonstrativos de unidade preservam os nomes do projeto original; não há integração ou emissão oficial de documentos da instituição.
 
-- **Aplicação publicada:** https://clinica-escola-endeson.vercel.app
-- **Repositório:** https://github.com/endeson12/clinica-escola-endeson (privado)
+- **Portal completo em homologação HTTPS:** https://clinica-escola.76.13.234.134.sslip.io
+- **URL estática anterior, legada:** https://clinica-escola-endeson.vercel.app — não é o novo serviço Java/PostgreSQL.
+- **Repositório:** https://github.com/endeson12/clinica-escola-endeson
+
+## Portal completo — entrega de 07/11/2026
+
+Seis perfis: administração, coordenação, professor, aluno, financeiro e recepção. Cursos, disciplinas, pessoas, turmas e matrículas; aulas e materiais por URL HTTPS; atividades com prazo e entrega final; avaliação em rascunho/publicada e boletim; extrato e baixa **demonstrativos**; carteirinha imprimível **sem validade oficial**; auditoria, busca, paginação e interface mobile. A clínica anterior foi preservada e seus dados não são concedidos aos perfis acadêmicos.
+
+**Verificação efetiva:** 23 testes Java/PostgreSQL, zero falhas/erros/pulados, e 39 verificações de aceitação em Chrome no endereço HTTPS, com seis perfis e APIs reais. Health confirma aplicação/banco `UP` e migração4. Backup restaurado e conferido em cópia separada. Isso valida homologação, não conformidade institucional ou prontuário assistencial.
+
+- [Guia de operação e limites](docs/portal-academico/OPERACAO.md)
+- [Implantação Docker, testes e backup](docs/portal-academico/IMPLANTACAO.md)
+- [Roteiro de aceitação em navegador](scripts/browser_acceptance.py)
+
+As credenciais ficam em arquivo privado fora do Git. Não existe cadastro público, senha publicada, pagamento real, SSO institucional ou upload de binários. A escala individual0–10 é provisória de homologação, sem média/aprovação institucional automática.
+
+As seções clínicas abaixo documentam a base preservada do projeto.
 
 ## Funcionalidades entregues
 

@@ -8,7 +8,7 @@
   const toggle = document.getElementById('toggle-senha');
 
   // ja logado? vai direto para a area interna
-  try { await Api.get('/api/auth/me'); location.replace('/dashboard.html'); return; } catch (e) { /* segue no login */ }
+  try { await Api.get('/api/auth/me'); location.replace('/portal.html'); return; } catch (e) { /* segue no login */ }
 
   if (new URLSearchParams(location.search).get('saiu') === '1') {
     alerta.className = 'alerta alerta--ok visivel';
@@ -17,10 +17,14 @@
 
   try {
     const unidades = await Api.get('/api/unidades');
+    if (!Array.isArray(unidades) || unidades.length === 0) throw new Error('Nenhuma unidade ativa está disponível.');
     sel.innerHTML = '<option value="">Selecione a unidade</option>' +
       unidades.map(u => '<option value="' + u.id + '">' + Form.esc(u.nome) + '</option>').join('');
+    document.getElementById('login-fields').disabled = false;
   } catch (e) {
     sel.innerHTML = '<option value="">Não foi possível carregar</option>';
+    alerta.className = 'alerta visivel';
+    alerta.textContent = (e.message || 'Não foi possível carregar as unidades.') + ' Recarregue a página para tentar novamente.';
   }
 
   toggle.addEventListener('click', () => {
@@ -46,7 +50,7 @@
     botao.querySelector('.rotulo').textContent = 'Entrando...';
     try {
       await Api.post('/api/auth/login', dados);
-      location.replace('/dashboard.html');
+      location.replace('/portal.html');
     } catch (e) {
       if (e.status === 403 && e.fieldErrors && e.fieldErrors.unidadeId) {
         Form.erroCampo(form, 'unidadeId', e.fieldErrors.unidadeId);
