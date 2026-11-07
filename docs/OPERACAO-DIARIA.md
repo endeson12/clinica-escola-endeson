@@ -21,7 +21,7 @@ O agendamento não comprova execução, testes, publicação ou recebimento futu
 2. Selecionar uma entrega delimitada pela dependência e prioridade.
 3. Para mudanças de comportamento: testar falha, implementar e testar regressões.
 4. Usar somente PostgreSQL de teste isolado, sem dados acadêmicos/pacientes reais.
-5. Abrir/atualizar PR com autoria verdadeira, testes e limitações.
+5. Abrir/atualizar PR pela conta da frente designada, conforme autorização posterior e seção de contas em `EQUIPE-E-EXECUCAO.md`; código de IA com autoria LEM, testes e limitações explícitos. Credencial só no subprocesso, sem login global ou tokens em remote/log.
 6. Atualizar campos do Kanban distinguindo responsável planejado e executor real.
 7. Publicar ou atualizar o registro diário com marcador `<!-- portal-daily:AAAA-MM-DD -->` para evitar duplicação.
 8. Relê o registro e verifica os links antes de resumir a entrega no Discord.
