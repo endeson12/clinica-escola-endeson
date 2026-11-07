@@ -4,6 +4,13 @@ target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 
+### Artefatos locais de Python e aceitação ###
+__pycache__/
+*.py[cod]
+qa-access.json
+homolog.env
+browser-results.json
+
 ### STS ###
 .apt_generated
 .classpath

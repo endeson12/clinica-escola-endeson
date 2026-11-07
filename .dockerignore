@@ -1,5 +1,5 @@
-target/
-.idea/
-.git/
-.env
-docs/
+**
+!Dockerfile
+!target/
+target/*
+!target/clinica-escola-0.0.1-SNAPSHOT.jar

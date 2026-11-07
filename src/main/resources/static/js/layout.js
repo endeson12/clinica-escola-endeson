@@ -10,6 +10,13 @@ const Sessao = (() => {
     }
     document.getElementById('chip-unidade').textContent = atual.unidade.nome;
     document.getElementById('nome-usuario').textContent = atual.nome;
+    const nav = document.querySelector('nav');
+    if (nav) {
+      const link = document.createElement('a');
+      link.href = '/portal.html';
+      link.textContent = 'Portal institucional ↗';
+      nav.prepend(link);
+    }
     return atual;
   })();
 

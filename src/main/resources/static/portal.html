@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="robots" content="noindex,nofollow" />
+    <meta name="theme-color" content="#102b46" />
+    <title>Portal | Clínica-Escola</title>
+    <link rel="icon" href="/img/portal-mark.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/css/portal.css" />
+  </head>
+  <body>
+    <a class="skip" href="#conteudo">Pular para o conteúdo</a>
+    <div class="app-shell">
+      <aside class="sidebar" id="sidebar" aria-label="Navegação principal">
+        <a
+          class="brand"
+          href="#inicio"
+          aria-label="Portal Clínica-Escola, início"
+          ><span class="brand-mark" aria-hidden="true">C<span>+</span></span
+          ><span>Clínica-Escola<small>PORTAL INSTITUCIONAL</small></span></a
+        >
+        <div class="campus-switch">
+          <span class="eyebrow">UNIDADE ATUAL</span
+          ><strong id="campus-name">Carregando…</strong
+          ><a href="#trocar-unidade" id="trocar-unidade">Trocar unidade ↗</a>
+        </div>
+        <nav id="menu" aria-label="Módulos do portal"></nav>
+        <div class="sidebar-footer">
+          <span class="avatar" id="avatar" aria-hidden="true">…</span>
+          <div>
+            <strong id="user-name">Carregando…</strong
+            ><small id="user-role">Sua sessão</small>
+          </div>
+          <button
+            class="icon-btn"
+            id="logout"
+            aria-label="Sair da conta"
+            title="Sair da conta"
+          >
+            ↪
+          </button>
+        </div>
+      </aside>
+      <button
+        id="nav-overlay"
+        class="nav-overlay"
+        aria-label="Fechar navegação"
+        hidden
+      ></button>
+      <div class="workspace">
+        <header class="topbar">
+          <div class="topbar-leading">
+            <button
+              class="icon-btn menu-toggle"
+              id="menu-toggle"
+              aria-label="Abrir navegação"
+              aria-controls="sidebar"
+              aria-expanded="false"
+            >
+              ☰</button
+            ><span id="breadcrumb">Portal / Início</span>
+          </div>
+          <span class="environment"><i aria-hidden="true"></i>Homologação</span>
+        </header>
+        <main id="conteudo" tabindex="-1" aria-busy="true">
+          <div class="loading" role="status">Preparando seu portal…</div>
+        </main>
+        <footer class="workspace-footer">
+          <span>Clínica-Escola · Portal independente</span
+          ><span>Sem integração ou documentos institucionais oficiais.</span>
+        </footer>
+      </div>
+    </div>
+    <dialog id="entity-dialog" aria-labelledby="dialog-title">
+      <div class="dialog-heading">
+        <div>
+          <p class="eyebrow" id="dialog-eyebrow">PORTAL INSTITUCIONAL</p>
+          <h2 id="dialog-title">Novo registro</h2>
+        </div>
+        <button
+          class="icon-btn"
+          id="dialog-close"
+          aria-label="Fechar formulário"
+        >
+          ×
+        </button>
+      </div>
+      <div id="dialog-body"></div>
+    </dialog>
+    <div
+      id="notification"
+      class="notification"
+      role="status"
+      aria-live="polite"
+      hidden
+    ></div>
+    <script src="/js/api.js"></script>
+    <script src="/js/portal.js"></script>
+  </body>
+</html>

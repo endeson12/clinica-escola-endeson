@@ -54,7 +54,7 @@ public class SecurityConfig {
             .addFilterBefore(new br.edu.clinicaescola.portal.PortalClinicalFilter(portalAccess),
                     org.springframework.security.web.access.intercept.AuthorizationFilter.class)
             .authorizeHttpRequests(a -> a
-                .requestMatchers("/", "/index.html", "/css/**", "/js/**", "/img/**", "/favicon.ico", "/error").permitAll()
+                .requestMatchers("/", "/index.html", "/css/**", "/js/**", "/fonts/**", "/img/**", "/favicon.ico", "/error").permitAll()
                 .requestMatchers("/api/auth/login", "/api/auth/csrf", "/api/health", "/api/unidades").permitAll()
                 .anyRequest().authenticated())
             .exceptionHandling(e -> e

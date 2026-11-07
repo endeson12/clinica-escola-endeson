@@ -1,65 +1,139 @@
 <!doctype html>
 <html lang="pt-BR">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Entrar | Clínica-Escola</title>
-  <meta name="robots" content="noindex">
-  <link rel="stylesheet" href="/css/style.css">
-</head>
-<body>
-<main class="login">
-  <section class="login__brand" aria-label="Apresentação">
-    <div>
-      <div class="marca"><span class="marca__icone"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3v18M3 12h18" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"/></svg></span> Clínica-Escola</div>
-      <h1>Gestão de pacientes, especialidades e atendimentos.</h1>
-      <p>Sistema interno da Clínica-Escola para as unidades universitárias Jóquei e Redenção.</p>
-      <ul class="login__lista">
-        <li>Cadastro de pacientes com validação de CPF</li>
-        <li>Especialidades ativas para novos atendimentos</li>
-        <li>Atendimentos registrados por unidade</li>
-      </ul>
-    </div>
-    <span class="demo-tag">Projeto acadêmico demonstrativo</span>
-  </section>
-
-  <section class="login__form-wrap">
-    <div class="login__card">
-      <h2>Acesse sua conta</h2>
-      <p class="sub">Informe a unidade e suas credenciais.</p>
-
-      <div id="alerta" class="alerta alerta--erro" role="alert"></div>
-
-      <form id="form-login" novalidate>
-        <div class="campo" data-campo="unidadeId">
-          <label for="unidade">Unidade</label>
-          <select id="unidade" name="unidadeId" required>
-            <option value="">Carregando unidades...</option>
-          </select>
-          <div class="msg-erro" aria-live="polite"></div>
-        </div>
-        <div class="campo" data-campo="email">
-          <label for="email">E-mail</label>
-          <input id="email" name="email" type="email" autocomplete="username" placeholder="nome@exemplo.com" required>
-          <div class="msg-erro" aria-live="polite"></div>
-        </div>
-        <div class="campo" data-campo="senha">
-          <label for="senha">Senha</label>
-          <div class="senha-wrap">
-            <input id="senha" name="senha" type="password" autocomplete="current-password" required>
-            <button type="button" id="toggle-senha" aria-controls="senha" aria-pressed="false">Mostrar</button>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="robots" content="noindex,nofollow" />
+    <title>Acessar portal | Clínica-Escola</title>
+    <link rel="icon" href="/img/portal-mark.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/css/portal.css" />
+    <link rel="stylesheet" href="/css/signin.css" />
+  </head>
+  <body class="signin-page">
+    <main class="signin-shell">
+      <section class="signin-story" aria-label="Portal Clínica-Escola">
+        <a class="brand" href="/index.html"
+          ><span class="brand-mark" aria-hidden="true">C<span>+</span></span
+          ><span>Clínica-Escola<small>PORTAL INSTITUCIONAL</small></span></a
+        >
+        <div class="story-content">
+          <span class="story-kicker">CONECTANDO ENSINO E CUIDADO</span>
+          <h1>Conhecimento <br />que acompanha <br />cada etapa.</h1>
+          <p>
+            Um espaço para organizar a vida acadêmica, apoiar o professor e
+            cuidar da rotina da clínica.
+          </p>
+          <div class="story-features">
+            <div>
+              <span>01</span><strong>Aprender</strong
+              ><small>Aulas, materiais e atividades</small>
+            </div>
+            <div>
+              <span>02</span><strong>Acompanhar</strong
+              ><small>Entregas e avaliações individuais</small>
+            </div>
+            <div>
+              <span>03</span><strong>Organizar</strong
+              ><small>Turmas, acessos e atendimento</small>
+            </div>
           </div>
-          <div class="msg-erro" aria-live="polite"></div>
         </div>
-        <button class="btn btn--primario btn--bloco" type="submit" id="btn-entrar">
-          <span class="spinner" aria-hidden="true"></span><span class="rotulo">Entrar</span>
-        </button>
-      </form>
-      <p class="login__rodape">Ambiente de demonstração, sem vínculo com sistemas oficiais. Não utilize dados reais.</p>
-    </div>
-  </section>
-</main>
-<script src="/js/api.js"></script>
-<script src="/js/auth.js"></script>
-</body>
+        <p class="story-footer">
+          Portal independente · acesso por perfil e unidade
+        </p>
+      </section>
+      <section class="signin-form-section">
+        <span class="environment"
+          ><i aria-hidden="true"></i>Ambiente de homologação</span
+        >
+        <div class="signin-box">
+          <p class="eyebrow">BEM-VINDO AO SEU PORTAL</p>
+          <h2>Acesse sua conta.</h2>
+          <p class="signin-description">
+            Selecione sua unidade e entre com o acesso fornecido pela
+            administração.
+          </p>
+          <div id="alerta" class="alerta" role="alert" tabindex="-1"></div>
+          <noscript
+            ><p class="notice error">
+              Ative o JavaScript para acessar. Nenhum formulário será enviado
+              sem a inicialização segura.
+            </p></noscript
+          >
+          <form id="form-login" novalidate>
+            <fieldset id="login-fields" disabled>
+              <div class="campo" data-campo="unidadeId">
+                <label for="unidade">Unidade</label
+                ><select
+                  id="unidade"
+                  name="unidadeId"
+                  autocomplete="organization"
+                  required
+                >
+                  <option value="">Carregando unidades…</option></select
+                ><span class="msg-erro" id="erro-unidade"></span>
+              </div>
+              <div class="campo" data-campo="email">
+                <label for="email">E-mail de acesso</label
+                ><input
+                  id="email"
+                  name="email"
+                  type="email"
+                  placeholder="seu.email@exemplo.com"
+                  autocomplete="username"
+                  required
+                  maxlength="160"
+                  aria-describedby="erro-email"
+                /><span class="msg-erro" id="erro-email"></span>
+              </div>
+              <div class="campo" data-campo="senha">
+                <label for="senha">Senha</label>
+                <div class="password-wrap">
+                  <input
+                    id="senha"
+                    name="senha"
+                    type="password"
+                    autocomplete="current-password"
+                    required
+                    aria-describedby="erro-senha"
+                  /><button
+                    id="toggle-senha"
+                    type="button"
+                    aria-controls="senha"
+                    aria-pressed="false"
+                  >
+                    Mostrar
+                  </button>
+                </div>
+                <span class="msg-erro" id="erro-senha"></span>
+              </div>
+              <button
+                class="btn primary login-button"
+                type="submit"
+                id="btn-entrar"
+              >
+                <span class="rotulo">Entrar no portal</span
+                ><span aria-hidden="true">→</span>
+              </button>
+            </fieldset>
+          </form>
+          <details class="access-help">
+            <summary>Precisa de ajuda para acessar?</summary>
+            <p>
+              Solicite à administração da sua unidade o cadastro ou a
+              regularização do acesso. Se você mudou de unidade, selecione o
+              vínculo correto. O portal não possui integração com contas
+              institucionais externas.
+            </p>
+          </details>
+        </div>
+        <p class="signin-disclaimer">
+          Não insira dados pessoais reais nesta homologação.<br />Financeiro e
+          carteirinha são demonstrativos, sem validade oficial.
+        </p>
+      </section>
+    </main>
+    <script src="/js/api.js"></script>
+    <script src="/js/auth.js"></script>
+  </body>
 </html>

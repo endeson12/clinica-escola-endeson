@@ -39,6 +39,8 @@ const Api = (() => {
   return {
     get: (url) => req('GET', url),
     post: (url, corpo) => req('POST', url, corpo),
+    put: (url, corpo) => req('PUT', url, corpo),
+    patch: (url, corpo) => req('PATCH', url, corpo),
   };
 })();
 
