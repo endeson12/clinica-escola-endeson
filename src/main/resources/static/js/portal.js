@@ -534,14 +534,21 @@
         "",
         roles[role].toLocaleUpperCase("pt-BR"),
       ) +
+      window.PortalExperience.hero(ctx) +
       (stats
         ? `<section class="metrics" aria-label="Indicadores do portal">${stats}</section>`
         : "") +
+      window.PortalExperience.shortcuts(ctx) +
       (academic.includes(role)
         ? `<div class="overview-grid"><section class="panel"><div class="section-heading"><div><h2>${is("ALUNO", "PROFESSOR") ? "Suas turmas" : "Turmas em andamento"}</h2><p>Acesso ao conteúdo e à rotina de ensino</p></div><a href="#turmas">Ver todas ↗</a></div>${turmaItems || empty("Nenhuma turma por aqui.", "A administração pode cadastrar turmas e vincular os participantes.")}</section><section class="panel"><div class="section-heading"><div><h2>Próximas atividades</h2><p>Prazos publicados pelos professores</p></div><a href="#atividades">Ver todas ↗</a></div>${atividadeItems || empty("Sem próximos prazos.", "As atividades publicadas aparecerão aqui.")}</section></div>`
         : is("RECEPCAO")
           ? `<section class="panel"><div class="empty">${icon("shield")}<h2>Gestão clínica preservada.</h2><p>Consulte pacientes, especialidades e atendimentos na área exclusiva da clínica. Seu perfil não recebe acesso aos dados acadêmicos.</p><a class="btn primary" href="/dashboard.html">Abrir gestão clínica ↗</a></div></section>`
           : `<section class="panel"><div class="section-heading"><h2>Financeiro demonstrativo</h2><a href="#financeiro">Abrir extrato ↗</a></div><div class="summary-strip"><span>Lançamentos<strong>${financeiro.length}</strong></span><span>Em aberto, valor simulado<strong>${money(financeiro.filter((f) => f.status === "ABERTO").reduce((s, f) => s + Math.round(Number(f.valor) * 100), 0) / 100)}</strong></span></div><div class="empty"><h2>Nenhum valor é cobrado por este portal.</h2><p>Lançamentos e baixas servem exclusivamente à homologação do fluxo financeiro.</p><a class="btn primary" href="#financeiro">Gerenciar lançamentos</a></div></section>`);
+    $("#conteudo").insertAdjacentHTML(
+      "beforeend",
+      window.PortalExperience.discovery(ctx),
+    );
+    window.PortalExperience.mountOverview();
   }
   function safeLink(value) {
     try {
@@ -1366,6 +1373,7 @@
   (async () => {
     try {
       ctx = await req("get", "/contexto");
+      window.PortalExperience.init(ctx, routes, icon);
       $("#campus-name").textContent = ctx.unidade.nome;
       $("#user-name").textContent = ctx.usuario.nome;
       $("#user-role").textContent =

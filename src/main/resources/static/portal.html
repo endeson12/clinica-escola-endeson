@@ -8,6 +8,7 @@
     <title>Portal | Clínica-Escola</title>
     <link rel="icon" href="/img/portal-mark.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="/css/portal.css" />
+    <link rel="stylesheet" href="/css/experience.css" />
   </head>
   <body>
     <a class="skip" href="#conteudo">Pular para o conteúdo</a>
@@ -61,12 +62,40 @@
               ☰</button
             ><span id="breadcrumb">Portal / Início</span>
           </div>
-          <span class="environment"><i aria-hidden="true"></i>Homologação</span>
+          <div class="topbar-tools">
+            <button
+              type="button"
+              class="module-trigger"
+              data-open-modules
+              aria-label="Buscar módulo"
+              aria-haspopup="dialog"
+            >
+              <svg
+                viewBox="0 0 20 20"
+                fill="none"
+                stroke="currentColor"
+                aria-hidden="true"
+              >
+                <circle cx="8" cy="8" r="5.5" />
+                <path d="m12 12 5 5" /></svg
+              ><span>Buscar módulo</span><kbd>Ctrl K</kbd></button
+            ><span class="environment"
+              ><i aria-hidden="true"></i>Homologação</span
+            >
+          </div>
         </header>
         <main id="conteudo" tabindex="-1" aria-busy="true">
           <div class="loading" role="status">Preparando seu portal…</div>
         </main>
         <footer class="workspace-footer">
+          <button
+            type="button"
+            class="motion-control"
+            id="motion-toggle"
+            aria-pressed="false"
+          >
+            Pausar animações
+          </button>
           <span>Clínica-Escola · Portal independente</span
           ><span>Sem integração ou documentos institucionais oficiais.</span>
         </footer>
@@ -96,6 +125,40 @@
       hidden
     ></div>
     <script src="/js/api.js"></script>
+    <dialog id="module-dialog" aria-labelledby="module-title">
+      <div class="dialog-heading">
+        <div>
+          <p class="eyebrow">NAVEGUE PELO SEU PORTAL</p>
+          <h2 id="module-title">Onde você quer ir?</h2>
+        </div>
+        <button
+          type="button"
+          class="icon-btn"
+          id="module-close"
+          aria-label="Fechar busca"
+        >
+          ×
+        </button>
+      </div>
+      <label class="module-search-label" for="module-search"
+        >Buscar por nome do módulo</label
+      ><input
+        class="module-search-input"
+        type="search"
+        id="module-search"
+        placeholder="Ex.: aulas, turmas, financeiro…"
+        autocomplete="off"
+      />
+      <div
+        class="module-results"
+        id="module-results"
+        aria-label="Módulos disponíveis"
+      ></div>
+      <p class="module-empty" id="module-empty" role="status" hidden>
+        Nenhum módulo encontrado para seu perfil. Tente outro termo.
+      </p>
+    </dialog>
+    <script src="/js/experience.js"></script>
     <script src="/js/portal.js"></script>
   </body>
 </html>
