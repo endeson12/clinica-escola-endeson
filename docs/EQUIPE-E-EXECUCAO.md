@@ -7,11 +7,11 @@ Plano aprovado pelo PO em 06/11/2026, mensagem Discord 1568368824573755444. Refe
 | Pessoa | Papel e frente | Conta GitHub | Situação da participação |
 |---|---|---|---|
 | Endeson Marcell | PO/Scrum Master: requisitos, prioridades, backlog, critérios de aceite e apresentação | `endeson12` | Conta do titular confirmada pelo repositório; decisões recebidas no canal do projeto |
-| Eduardo | Desenvolvimento: backend Java, API, modelagem de dados, migrações e regras de negócio | A confirmar | Frente designada pelo PO; autoria ou execução só serão registradas quando acontecerem |
-| Leônidas | Desenvolvimento: frontend, responsividade, acessibilidade, usabilidade e integração das telas | A confirmar | Frente designada pelo PO; autoria ou execução só serão registradas quando acontecerem |
+| Eduardo | Desenvolvimento: backend Java, API, modelagem de dados, migrações e regras de negócio | `fduduu` — confirmado pelo PO | Frente designada; issues #2/#4/#7/#8 atribuídas à conta. Autoria ou execução só serão registradas quando acontecerem |
+| Leônidas | Desenvolvimento: frontend, responsividade, acessibilidade, usabilidade e integração das telas | `ldevloper` — confirmado pelo PO | Frente designada; convite de escrita pendente de aceite. Autoria ou execução só serão registradas quando acontecerem |
 | LEM | Assistência de IA: implementação assistida, integração, automação de testes e relatos verificáveis | Não representa uma conta pessoal de integrante | Executora dos incrementos assistidos identificados nas PRs e atualizações |
 
-`fduduu` está cadastrado como colaborador com escrita; `ldevloper` tem convite de escrita pendente na inspeção de 06/11. A associação desses logins aos dois integrantes **ainda não foi confirmada**. Não usar tokens para descobrir identidades ou publicar como outra pessoa. Convite pendente não comprova participação ou aceite.
+Associação confirmada pelo PO na mensagem Discord **1568446040775065691**: **Eduardo = `fduduu`; Leônidas = `ldevloper`**. Readback de acessos: Eduardo é colaborador com escrita; Leônidas ainda tem convite pendente. Registrar a designação de Leônidas no quadro sem declarar aceite ou atribuição formal à conta antes da confirmação remota. Não usar tokens expostos nem publicar como outra pessoa. Convite e assignee não comprovam trabalho realizado.
 
 ## Divisão inicial do backlog
 
