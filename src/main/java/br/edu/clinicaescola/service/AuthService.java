@@ -57,6 +57,11 @@ public class AuthService {
                     "Seu usuário não está autorizado na unidade " + unidade.getNome() + ".");
         }
 
+        // O login manual tambem precisa descartar o CSRF anterior a autenticacao.
+        new org.springframework.security.web.csrf.CsrfAuthenticationStrategy(
+                org.springframework.security.web.csrf.CookieCsrfTokenRepository.withHttpOnlyFalse())
+                .onAuthentication(auth, request, response);
+
         // nova sessao (protecao contra fixacao de sessao) com o usuario e a unidade
         request.getSession(true);
         request.changeSessionId();
