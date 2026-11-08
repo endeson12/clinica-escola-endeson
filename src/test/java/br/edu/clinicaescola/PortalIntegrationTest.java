@@ -156,6 +156,14 @@ class PortalIntegrationTest {
         assertFalse(audit.contains(SENHA)); assertFalse(audit.contains("senha_hash"));
         mvc.perform(get(BASE+"/aulas?turmaId=nao-numerico").cookie(a)).andExpect(status().isBadRequest());
     }
+    @Test void alunoSemVinculoComUnidadeNaoRecebeNovaMatricula() throws Exception {
+        Cookie a=admin(); Turma t=turma(a); Pessoa outro=pessoa(a,"ALUNO");
+        jdbc.update("delete from usuarios_unidades where usuario_id=? and unidade_id=?",outro.id,unidade("JOQUEI"));
+        send(a,post(BASE+"/matriculas"),Map.of("turmaId",t.turma,"alunoId",outro.id))
+                .andExpect(status().isNotFound());
+        assertEquals(0,jdbc.queryForObject("select count(*) from academico_matriculas where turma_id=? and aluno_id=?",Integer.class,t.turma,outro.id));
+        mvc.perform(get(BASE+"/turmas").cookie(outro.sessao)).andExpect(status().isUnauthorized());
+    }
     @Test void cancelamentoRevogaConteudoEMantemHistorico() throws Exception {
         Cookie a=admin(); Turma t=turma(a);
         Long m=jdbc.queryForObject("select id from academico_matriculas where turma_id=? and aluno_id=?",Long.class,t.turma,t.aluno.id);
