@@ -104,8 +104,8 @@ with sync_playwright() as pw:
             ok('Carteirinha usa brasão sem remover aviso de ausência de validade oficial')
         else:
             ok('Carteirinha indisponível sem matrícula ativa; ausência de dados respeitada')
-    p.once('dialog', lambda dialog: dialog.accept())
     p.get_by_role('button',name='Sair da conta',exact=True).click()
+    p.locator('#confirm-dialog').get_by_role('button',name='Sair agora',exact=True).click()
     p.wait_for_url('**/index.html*')
     p.set_viewport_size({'width':390,'height':844});settle(p);logo(p);overflow(p)
     p.screenshot(path=str(out/'login-mobile.png'),full_page=True,animations='disabled')

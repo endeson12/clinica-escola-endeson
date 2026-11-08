@@ -124,6 +124,8 @@
       desc: "Últimas 200 operações desta unidade, com responsável e horário.",
     },
   };
+  Object.assign(routes, window.PortalServices.routes);
+  let financeFilter = "ABERTO";
   const paths = {
     home: "M3 10 10 4l7 6v7a1 1 0 0 1-1 1h-4v-6H8v6H4a1 1 0 0 1-1-1z",
     people:
@@ -141,7 +143,8 @@
     search: "M9 15a6 6 0 1 0 0-12 6 6 0 0 0 0 12m5-1 4 4",
   };
   function icon(name) {
-    return `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.45" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${paths[name] || paths.book}"/></svg>`;
+    if (!Object.hasOwn(paths, name)) return window.PortalUX.icon(name);
+    return `<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${paths[name]}"/></svg>`;
   }
   function is(...rs) {
     return rs.includes(ctx.usuario.perfil);
@@ -433,9 +436,12 @@
           [
             "",
             (r) =>
-              is("ADMIN", "FINANCEIRO") && r.status === "ABERTO"
-                ? actions([btn("settle-demo", r.id, "Simular baixa")])
-                : "",
+              actions([
+                btn("finance-detail", r.id, "Detalhes"),
+                ...(is("ADMIN", "FINANCEIRO") && r.status === "ABERTO"
+                  ? [btn("settle-demo", r.id, "Simular baixa")]
+                  : []),
+              ]),
           ],
         ],
         auditoria: [
@@ -458,6 +464,8 @@
         .toLocaleLowerCase("pt-BR")
         .includes(query.toLocaleLowerCase("pt-BR")),
     );
+    if (current === "financeiro")
+      list = list.filter((r) => r.status === financeFilter);
     const pages = Math.max(1, Math.ceil(list.length / 12));
     page = Math.min(Math.max(1, page), pages);
     const slice = list.slice((page - 1) * 12, page * 12);
@@ -534,6 +542,7 @@
         "",
         roles[role].toLocaleUpperCase("pt-BR"),
       ) +
+      window.PortalServices.overview() +
       window.PortalExperience.hero(ctx) +
       (stats
         ? `<section class="metrics" aria-label="Indicadores do portal">${stats}</section>`
@@ -652,6 +661,7 @@
         await identity(seq);
         return;
       }
+      if (await window.PortalServices.render(current)) return;
       let qs = "";
       if (["aulas", "atividades"].includes(current) && s.params.get("turma"))
         qs = "?turmaId=" + encodeURIComponent(s.params.get("turma"));
@@ -688,6 +698,27 @@
           $(".panel").insertAdjacentHTML(
             "afterbegin",
             `<div class="summary-strip"><span>Em aberto, valor simulado<strong>${money(open / 100)}</strong></span><span>Lançamentos<strong>${rows.length}</strong></span></div>`,
+          );
+        }
+        if (current === "financeiro") {
+          financeFilter = "ABERTO";
+          document
+            .querySelector(".panel")
+            .insertAdjacentHTML(
+              "beforebegin",
+              `<div class="service-tabs" aria-label="Situação dos lançamentos"><button data-finance-tab="ABERTO" aria-pressed="true">A pagar</button><button data-finance-tab="BAIXA_DEMONSTRATIVA" aria-pressed="false">Histórico</button></div>`,
+            );
+          document.querySelectorAll("[data-finance-tab]").forEach((b) =>
+            b.addEventListener("click", () => {
+              financeFilter = b.dataset.financeTab;
+              page = 1;
+              document
+                .querySelectorAll("[data-finance-tab]")
+                .forEach((x) =>
+                  x.setAttribute("aria-pressed", String(x === b)),
+                );
+              drawTable();
+            }),
           );
         }
         wireTable();
@@ -727,11 +758,18 @@
     dirty = false;
     dialog.showModal();
   }
-  function closeDialog(force = false) {
+  async function closeDialog(force = false) {
     if (
       dirty &&
       !force &&
-      !confirm("Descartar as alterações não salvas deste formulário?")
+      !(await window.PortalUX.confirm(
+        "Descartar as alterações não salvas deste formulário?",
+        {
+          title: "Alterações não salvas",
+          accept: "Descartar alterações",
+          cancel: "Continuar editando",
+        },
+      ))
     )
       return;
     dirty = false;
@@ -1283,8 +1321,9 @@
           break;
         case "cancel-enrolment":
           if (
-            confirm(
+            await window.PortalUX.confirm(
               "Cancelar esta matrícula? O aluno perderá acesso à turma, mas o histórico será preservado.",
+              { accept: "Cancelar matrícula", cancel: "Manter matrícula" },
             )
           ) {
             await req("post", "/matriculas/" + id + "/cancelar", {});
@@ -1295,8 +1334,9 @@
           break;
         case "settle-demo":
           if (
-            confirm(
+            await window.PortalUX.confirm(
               "Registrar somente uma baixa demonstrativa? Nenhum pagamento real será processado.",
+              { accept: "Registrar demonstração" },
             )
           ) {
             await req("post", "/financeiro/" + id + "/baixa-demonstrativa", {});
@@ -1305,6 +1345,12 @@
             );
             await render();
           }
+          break;
+        case "finance-detail":
+          showDialog(
+            "Detalhes do lançamento demonstrativo",
+            `<div class="detail-stack"><article><h3>${esc(record.descricao)}</h3><p>${esc(record.aluno_nome)}</p><p>${money(record.valor)} · vencimento ${esc(shortDate(record.vencimento))}</p><p>${record.status === "ABERTO" ? "Em aberto" : "Baixa demonstrativa"}</p></article><p class="notice warning">Nenhum Pix, cartão, boleto, negociação ou pagamento real é processado por este portal.</p></div>`,
+          );
           break;
         case "print":
           window.print();
@@ -1336,11 +1382,16 @@
   });
   async function logout(changeUnit = false) {
     if (
-      !confirm(
+      !(await window.PortalUX.confirm(
         changeUnit
           ? "Encerrar a sessão atual para entrar em outra unidade?"
           : "Sair da sua conta?",
-      )
+        {
+          title: changeUnit ? "Trocar unidade" : "Encerrar sessão",
+          accept: changeUnit ? "Trocar unidade" : "Sair agora",
+          cancel: "Continuar na conta",
+        },
+      ))
     )
       return;
     try {
@@ -1373,6 +1424,13 @@
   (async () => {
     try {
       ctx = await req("get", "/contexto");
+      window.PortalServices.init({
+        ctx: () => ctx,
+        form,
+        heading,
+        notify,
+        reload: render,
+      });
       window.PortalExperience.init(ctx, routes, icon);
       $("#campus-name").textContent = ctx.unidade.nome;
       $("#user-name").textContent = ctx.usuario.nome;
