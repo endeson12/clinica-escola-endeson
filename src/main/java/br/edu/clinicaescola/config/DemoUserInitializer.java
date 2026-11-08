@@ -32,6 +32,7 @@ public class DemoUserInitializer implements ApplicationRunner {
     private final org.springframework.jdbc.core.JdbcTemplate jdbc;
 
     @Value("${app.demo.admin.email:}") private String adminEmail;
+    @Value("${app.demo.enabled:true}") private boolean demoEnabled;
     @Value("${app.demo.admin.password:}") private String adminSenha;
     @Value("${app.demo.recepcao.email:}") private String recepEmail;
     @Value("${app.demo.recepcao.password:}") private String recepSenha;
@@ -47,6 +48,10 @@ public class DemoUserInitializer implements ApplicationRunner {
     @Override
     @Transactional
     public void run(ApplicationArguments args) {
+        if (!demoEnabled) {
+            log.info("Provisionamento de usuarios demonstrativos desativado.");
+            return;
+        }
         garantir("Administrador Demonstrativo", adminEmail, adminSenha, unidades.findAll(), "ADMIN");
         unidades.findByCodigo("JOQUEI").ifPresent(j ->
                 garantir("Recepção Jóquei (demo)", recepEmail, recepSenha, List.of(j), "RECEPCAO"));

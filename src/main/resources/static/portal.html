@@ -2,6 +2,7 @@
 <html lang="pt-BR">
   <head>
     <meta charset="utf-8" />
+    <script src="/js/theme.js"></script>
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <meta name="robots" content="noindex,nofollow" />
     <meta name="theme-color" content="#102b46" />
@@ -10,6 +11,7 @@
     <link rel="stylesheet" href="/css/portal.css" />
     <link rel="stylesheet" href="/css/experience.css" />
     <link rel="stylesheet" href="/css/brand.css" />
+    <link rel="stylesheet" href="/css/ux.css" />
   </head>
   <body>
     <header class="print-brand"><img src="/img/uninassau-brasao.png" width="42" height="54" alt="Brasão UNINASSAU"><div><strong>UNINASSAU · Clínica-Escola</strong><br><small>Homologação independente — documento demonstrativo, sem validade oficial.</small></div></header>
@@ -38,6 +40,7 @@
           <button
             class="icon-btn"
             id="logout"
+            data-ui-icon="logout"
             aria-label="Sair da conta"
             title="Sair da conta"
           >
@@ -57,6 +60,7 @@
             <button
               class="icon-btn menu-toggle"
               id="menu-toggle"
+              data-ui-icon="menu"
               aria-label="Abrir navegação"
               aria-controls="sidebar"
               aria-expanded="false"
@@ -112,6 +116,7 @@
         <button
           class="icon-btn"
           id="dialog-close"
+          data-ui-icon="close"
           aria-label="Fechar formulário"
         >
           ×
@@ -161,6 +166,8 @@
       </p>
     </dialog>
     <script src="/js/experience.js"></script>
+    <script src="/js/portal-ux.js"></script>
+    <script src="/js/portal-services.js"></script>
     <script src="/js/portal.js"></script>
   </body>
 </html>
