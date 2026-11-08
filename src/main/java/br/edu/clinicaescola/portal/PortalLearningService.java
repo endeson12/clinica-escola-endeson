@@ -97,7 +97,7 @@ public class PortalLearningService {
         String scope=(usuario==0?"":" and e.aluno_id="+usuario)+(c.is("PROFESSOR")?access.escopoTurma(c):"");
         return db.list("""
             select e.id,e.aluno_id,u.nome aluno_nome,a.titulo atividade_titulo,d.nome disciplina_nome,
-            t.nome turma_nome,t.periodo,e.nota,e.feedback,e.avaliado_em,false oficial
+            t.id turma_id,t.nome turma_nome,t.periodo,e.nota,e.feedback,e.avaliado_em,false oficial
             from academico_entregas e join academico_atividades a on a.id=e.atividade_id
             join academico_turmas t on t.id=a.turma_id join academico_disciplinas d on d.id=t.disciplina_id
             join usuarios u on u.id=e.aluno_id where e.unidade_id=? and e.publicada
