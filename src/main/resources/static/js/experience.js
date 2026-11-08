@@ -91,6 +91,20 @@
       alt: "Modelo com livros em imagem da campanha pública UNINASSAU Day.",
       campaign: true,
     },
+    ...[
+      ["01", "Brasão em composição clássica", 399, 300],
+      ["02", "Assinatura UNINASSAU", 225, 225],
+      ["03", "Assinatura horizontal", 715, 279],
+      ["04", "Emblema circular", 448, 446],
+      ["05", "Composição azul e amarelo", 447, 447],
+      ["06", "Assinatura de referência Ser Educacional", 399, 300],
+      ["07", "Brasão principal aplicado no portal", 225, 225],
+      ["08", "Emblema em textura bordada", 554, 554],
+    ].map(([id, title, width, height]) => ({
+      image: `arte-enviada-${id}.webp`, title, width, height,
+      description: "Arte enviada pelo usuário para esta homologação. Marca de seu respectivo titular; não indica vínculo oficial do portal.",
+      tag: "IDENTIDADE ENVIADA · UNINASSAU", alt: `${title} — arte enviada pelo usuário.`, userArt: true,
+    })),
   ];
   function paintGallery() {
     const stage = $("#gallery-stage"),
@@ -98,7 +112,8 @@
     if (!stage || !caption) return;
     const item = gallery[slide];
     stage.classList.toggle("campaign", !!item.campaign);
-    stage.innerHTML = `<img src="/img/${item.image}" alt="${esc(item.alt)}" width="${item.campaign ? 316 : 1536}" height="${item.campaign ? 485 : 1024}" loading="lazy" decoding="async"/>${item.campaign ? '<img class="campaign-mark" src="/img/uninassau-referencia.webp" width="281" height="59" alt="UNINASSAU — marca da fonte de referência"/><span class="campaign-label">Aprender.<br/>Conectar.<br/>Transformar.</span>' : ""}<span class="gallery-tag">${item.tag}</span>`;
+    stage.classList.toggle("user-art", !!item.userArt);
+    stage.innerHTML = `<img src="/img/${item.image}" alt="${esc(item.alt)}" width="${item.width || (item.campaign ? 316 : 1536)}" height="${item.height || (item.campaign ? 485 : 1024)}" loading="lazy" decoding="async"/>${item.campaign ? '<img class="campaign-mark" src="/img/uninassau-referencia.webp" width="281" height="59" alt="UNINASSAU — marca da fonte de referência"/><span class="campaign-label">Aprender.<br/>Conectar.<br/>Transformar.</span>' : ""}<span class="gallery-tag">${item.tag}</span>`;
     caption.innerHTML = `<h3>${item.title}</h3><p>${item.description}</p>${item.campaign ? `<a href="${source}" target="_blank" rel="noopener noreferrer">Ver a fonte pública ↗</a>` : ""}`;
     document
       .querySelectorAll("[data-gallery-slide]")
@@ -234,7 +249,7 @@
         modules.find((m) => m.key === "aulas") ||
         modules.find((m) => m.key === "financeiro") ||
         modules[0];
-      return `<section class="discovery" aria-label="Inspirações e referências visuais"><article class="gallery" aria-label="Galeria de imagens do portal"><div class="gallery-stage" id="gallery-stage"></div><div class="gallery-caption" id="gallery-caption"></div><div class="gallery-controls"><div class="gallery-dots">${gallery.map((item, i) => `<button type="button" data-gallery-slide="${i}" aria-label="Ver imagem ${i + 1}" aria-pressed="${i === slide}"></button>`).join("")}</div><div class="gallery-arrows"><button type="button" data-gallery-direction="-1" aria-label="Imagem anterior">←</button><button type="button" data-gallery-direction="1" aria-label="Próxima imagem">→</button></div></div><p class="sr-only" id="gallery-status" role="status" aria-live="polite"></p><small class="gallery-credit">Artes de IA + referência pública UNINASSAU Day. Portal independente, sem vínculo ou integração institucional oficial.</small></article><article class="study-panel"><img src="/img/estudo-saude-640.webp" width="640" height="427" alt="Arte conceitual de materiais de estudo e saúde." loading="lazy" decoding="async"/><div class="study-copy"><p class="eyebrow">APRENDER É UM MOVIMENTO</p><h2>Um passo de cada vez.<br/>Todos os dias.</h2><p>Encontre o que precisa para continuar: ${ctx.usuario.perfil === "RECEPCAO" ? "organização e atenção à rotina clínica." : "conteúdo, acompanhamento e organização da sua rotina."}</p><a class="btn" href="#${target.key}">Abrir ${esc(target.name.toLocaleLowerCase("pt-BR"))} ↗</a><small>Ilustração original gerada por IA.</small></div></article></section>`;
+      return `<section class="discovery" aria-label="Inspirações e referências visuais"><article class="gallery" aria-label="Galeria de imagens do portal"><div class="gallery-stage" id="gallery-stage"></div><div class="gallery-caption" id="gallery-caption"></div><div class="gallery-controls"><div class="gallery-dots">${gallery.map((item, i) => `<button type="button" data-gallery-slide="${i}" aria-label="Ver imagem ${i + 1}" aria-pressed="${i === slide}"></button>`).join("")}</div><div class="gallery-arrows"><button type="button" data-gallery-direction="-1" aria-label="Imagem anterior">←</button><button type="button" data-gallery-direction="1" aria-label="Próxima imagem">→</button></div></div><p class="sr-only" id="gallery-status" role="status" aria-live="polite"></p><small class="gallery-credit">Artes enviadas pelo usuário + artes de IA + referência pública UNINASSAU Day. Portal independente, sem vínculo ou integração institucional oficial.</small></article><article class="study-panel"><img src="/img/estudo-saude-640.webp" width="640" height="427" alt="Arte conceitual de materiais de estudo e saúde." loading="lazy" decoding="async"/><div class="study-copy"><p class="eyebrow">APRENDER É UM MOVIMENTO</p><h2>Um passo de cada vez.<br/>Todos os dias.</h2><p>Encontre o que precisa para continuar: ${ctx.usuario.perfil === "RECEPCAO" ? "organização e atenção à rotina clínica." : "conteúdo, acompanhamento e organização da sua rotina."}</p><a class="btn" href="#${target.key}">Abrir ${esc(target.name.toLocaleLowerCase("pt-BR"))} ↗</a><small>Ilustração original gerada por IA.</small></div></article></section>`;
     },
     mountOverview() {
       paintGallery();

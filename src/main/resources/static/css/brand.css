@@ -1,0 +1,18 @@
+/* Marca fornecida pelo usuário: preservar proporções e a natureza demonstrativa. */
+.brand-mark,.signin-story .brand-mark { display:block; width:48px; height:56px; flex:0 0 auto; object-fit:contain; padding:4px; background:#f7f7f7; border:0; border-radius:6px; box-shadow:none; }
+.brand > span { min-width:0; }
+.brand small { white-space:normal; line-height:1.6; }
+.brand-subtitle { display:block; font-size:10px; line-height:1.5; font-weight:500; }
+.marca .brand-mark { width:42px; height:48px; }
+.gallery-stage.user-art { background:#fff; }
+.gallery-stage.user-art > img { width:100%; height:100%; object-fit:contain; padding:28px 28px 52px; background:#fff; }
+.gallery-controls { flex-wrap:wrap; gap:12px; }
+.gallery-dots { flex-wrap:wrap; gap:9px; }
+.identity-brand { object-fit:contain; background:#f7f7f7; padding:3px; border-radius:4px; }
+.print-brand,.mobile-brand { display:none; }
+@media(max-width:780px) { .mobile-brand { display:block; object-fit:contain; background:#f7f7f7; padding:2px; border-radius:4px; } }
+@media(max-width:450px) { .topbar-leading #breadcrumb { display:none; } }
+.identity-top { flex-wrap:wrap; }
+.identity-top strong { min-width:0; overflow-wrap:anywhere; }
+@media(max-width:450px) { .sidebar .brand { gap:10px; } .signin-story .brand { gap:12px; } .gallery-stage.user-art > img { padding:18px 18px 48px; } .gallery-controls { align-items:flex-start; } }
+@media print { .print-brand { display:flex; align-items:center; gap:12px; margin:0 0 16px; padding:12px; border-bottom:1px solid #ccd5e3; color:#162c50; } .print-brand img { object-fit:contain; } }
