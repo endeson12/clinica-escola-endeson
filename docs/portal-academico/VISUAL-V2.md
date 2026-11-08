@@ -39,7 +39,8 @@ Fonte: <https://conheca.sereducacional.com/uninassauday>, página pública do Gr
 ## Verificação reproduzível
 
 - Regressão Java/PostgreSQL executada nesta frente: 23 testes, zero falhas, erros ou ignorados.
-- `scripts/visual_acceptance.py`: 13 verificações locais, incluindo movimento real observado entre quadros, navegação por teclado, galeria e responsividade de 320 a 1440 px.
+- `scripts/visual_acceptance.py`: 13 verificações locais e públicas em HTTPS aprovadas, incluindo movimento real observado entre quadros, navegação por teclado, galeria e responsividade de 320 a 1440 px. Capturas aguardam fontes, decodificação das imagens e conclusão real das animações; não congelam nem simulam o estado final.
+- Regressão funcional pública desta versão: 39 verificações aprovadas em `visual-v2-public-functional/browser-results.json`, sem erros JavaScript ou respostas HTTP inesperadas. Evidência visual em `visual-v2-public-final/visual-results.json`, fora do Git e sem credenciais.
 - Para regressão funcional integral, executar `scripts/browser_acceptance.py` contra HTTPS real. Um preview HTTP com proxy não é equivalente: o navegador pode aceitar cookies Secure em loopback, enquanto o cliente HTTP de API do Playwright não os reenvia. Não enfraquecer cookies para acomodar o teste.
 - Exemplo, com arquivos privados fora do repositório: `PORTAL_QA_ROOT=/caminho/privado python scripts/visual_acceptance.py --base https://seu-host --access-json /caminho/privado/qa-access.json --prefix visual-v2`.
 
