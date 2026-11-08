@@ -8,38 +8,84 @@
     <link rel="icon" href="/img/portal-mark.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="/css/portal.css" />
     <link rel="stylesheet" href="/css/signin.css" />
+    <link rel="stylesheet" href="/css/experience.css" />
+    <link rel="stylesheet" href="/css/signin-visual.css" />
   </head>
   <body class="signin-page">
     <main class="signin-shell">
       <section class="signin-story" aria-label="Portal Clínica-Escola">
+        <img
+          class="signin-scene"
+          src="/img/campus-conceitual.webp"
+          srcset="
+            /img/campus-conceitual-640.webp  640w,
+            /img/campus-conceitual.webp     1536w
+          "
+          sizes="(max-width:650px) 100vw, 60vw"
+          width="1536"
+          height="1024"
+          alt=""
+          fetchpriority="high"
+        />
         <a class="brand" href="/index.html"
           ><span class="brand-mark" aria-hidden="true">C<span>+</span></span
           ><span>Clínica-Escola<small>PORTAL INSTITUCIONAL</small></span></a
         >
         <div class="story-content">
-          <span class="story-kicker">CONECTANDO ENSINO E CUIDADO</span>
-          <h1>Conhecimento <br />que acompanha <br />cada etapa.</h1>
+          <span class="story-kicker">ENSINO + CUIDADO + CONEXÃO</span>
+          <h1>Aprender<br />transforma.<br /><em>Cuidar conecta.</em></h1>
           <p>
             Um espaço para organizar a vida acadêmica, apoiar o professor e
             cuidar da rotina da clínica.
           </p>
-          <div class="story-features">
-            <div>
-              <span>01</span><strong>Aprender</strong
-              ><small>Aulas, materiais e atividades</small>
-            </div>
-            <div>
-              <span>02</span><strong>Acompanhar</strong
-              ><small>Entregas e avaliações individuais</small>
-            </div>
-            <div>
-              <span>03</span><strong>Organizar</strong
-              ><small>Turmas, acessos e atendimento</small>
-            </div>
+          <div class="story-tabs" role="tablist" aria-label="Conheça o portal">
+            <button
+              type="button"
+              role="tab"
+              id="story-aprender"
+              data-story-tab="aprender"
+              aria-selected="true"
+              aria-controls="story-panel"
+            >
+              Aprender</button
+            ><button
+              type="button"
+              role="tab"
+              id="story-acompanhar"
+              data-story-tab="acompanhar"
+              aria-selected="false"
+              aria-controls="story-panel"
+              tabindex="-1"
+            >
+              Acompanhar</button
+            ><button
+              type="button"
+              role="tab"
+              id="story-organizar"
+              data-story-tab="organizar"
+              aria-selected="false"
+              aria-controls="story-panel"
+              tabindex="-1"
+            >
+              Organizar
+            </button>
+          </div>
+          <div
+            class="story-panel"
+            id="story-panel"
+            role="tabpanel"
+            aria-labelledby="story-aprender"
+            tabindex="0"
+          >
+            <h2>Conhecimento que acompanha você.</h2>
+            <p>
+              Encontre aulas, materiais e atividades publicados para suas
+              turmas.
+            </p>
           </div>
         </div>
         <p class="story-footer">
-          Portal independente · acesso por perfil e unidade
+          Portal independente · arte conceitual de IA, não é campus real
         </p>
       </section>
       <section class="signin-form-section">
@@ -47,7 +93,8 @@
           ><i aria-hidden="true"></i>Ambiente de homologação</span
         >
         <div class="signin-box">
-          <p class="eyebrow">BEM-VINDO AO SEU PORTAL</p>
+          <span class="login-symbol" aria-hidden="true">↗</span>
+          <p class="eyebrow">SEU PRÓXIMO PASSO COMEÇA AQUI</p>
           <h2>Acesse sua conta.</h2>
           <p class="signin-description">
             Selecione sua unidade e entre com o acesso fornecido pela
@@ -134,6 +181,7 @@
       </section>
     </main>
     <script src="/js/api.js"></script>
+    <script src="/js/experience.js"></script>
     <script src="/js/auth.js"></script>
   </body>
 </html>
