@@ -151,7 +151,11 @@ window.PortalServices = (() => {
   function renderCourse(data) {
     const [turmas, aulas, grades] = data;
     cache.course = { turmas, aulas, grades };
-    const periods = [...new Set(turmas.map((t) => t.periodo))].sort().reverse();
+    const periods = [...new Set(turmas.map((t) => t.periodo))].sort((a, b) => {
+      // Academic semesters precede arbitrary legacy/demo labels.
+      const semester = (value) => /^\d{4}\.[12]$/.test(value);
+      return Number(semester(b)) - Number(semester(a)) || b.localeCompare(a);
+    });
     let chosen =
       new URLSearchParams(location.hash.split("?")[1]).get("periodo") ||
       periods[0] ||

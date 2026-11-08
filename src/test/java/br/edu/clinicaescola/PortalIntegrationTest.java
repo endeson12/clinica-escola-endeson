@@ -73,7 +73,7 @@ class PortalIntegrationTest {
         send(t.professor.sessao,put(BASE+"/entregas/"+e+"/avaliacao"),Map.of("nota",8.5,"feedback","Boa fundamentação.","publicada",false)).andExpect(status().isOk());
         mvc.perform(get(BASE+"/boletim").cookie(t.aluno.sessao)).andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(0));
         send(t.professor.sessao,put(BASE+"/entregas/"+e+"/avaliacao"),Map.of("nota",8.5,"feedback","Boa fundamentação.","publicada",true)).andExpect(status().isOk());
-        mvc.perform(get(BASE+"/boletim").cookie(t.aluno.sessao)).andExpect(status().isOk()).andExpect(jsonPath("$[0].nota").value(8.5));
+        mvc.perform(get(BASE+"/boletim").cookie(t.aluno.sessao)).andExpect(status().isOk()).andExpect(jsonPath("$[0].nota").value(8.5)).andExpect(jsonPath("$[0].turma_id").value(t.turma));
         mvc.perform(get(BASE+"/carteirinha").cookie(t.aluno.sessao)).andExpect(status().isOk()).andExpect(jsonPath("$.oficial").value(false));
         long f=create(a,"/financeiro",Map.of("alunoId",t.aluno.id,"descricao","Mensalidade demonstrativa","valor",125.50,"vencimento","2099-12-01"));
         send(a,post(BASE+"/financeiro/"+f+"/baixa-demonstrativa"),Map.of()).andExpect(status().isOk()).andExpect(jsonPath("$.status").value("BAIXA_DEMONSTRATIVA"));
