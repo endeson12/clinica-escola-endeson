@@ -46,6 +46,34 @@ class ClinicaEscolaIntegrationTest {
     }
 
     @Test
+    void healthPublicoConfirmaPostgresSemCredenciais() throws Exception {
+        mvc.perform(get("/api/health"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith("application/json"))
+                .andExpect(jsonPath("$.aplicacao").value("UP"))
+                .andExpect(jsonPath("$.banco").value("UP"))
+                .andExpect(jsonPath("$.unidadesCadastradas").value(greaterThan(0)))
+                .andExpect(jsonPath("$.migracaoAtual").isNotEmpty())
+                .andExpect(jsonPath("$.*", hasSize(4)));
+    }
+
+    @Test
+    void paginaDeLoginPublicaEntregaFormularioSemAutenticacao() throws Exception {
+        mvc.perform(get("/index.html"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith("text/html"))
+                .andExpect(content().string(containsString("type=\"password\"")))
+                .andExpect(content().string(containsString("/js/auth.js")));
+    }
+
+    @Test
+    void disponibilidadePublicaNaoLiberaDadosClinicosSemSessao() throws Exception {
+        mvc.perform(get("/api/health")).andExpect(status().isOk());
+        mvc.perform(get("/api/pacientes")).andExpect(status().isUnauthorized());
+        mvc.perform(get("/api/atendimentos")).andExpect(status().isUnauthorized());
+    }
+
+    @Test
     void loginRenovaCsrfESessaoRejeitaCabecalhoAntigo() throws Exception {
         Cookie antes = mvc.perform(get("/api/auth/csrf"))
                 .andExpect(status().isOk()).andReturn().getResponse().getCookie("XSRF-TOKEN");
