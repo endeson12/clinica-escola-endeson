@@ -164,6 +164,25 @@ class PortalIntegrationTest {
         assertEquals(0,jdbc.queryForObject("select count(*) from academico_matriculas where turma_id=? and aluno_id=?",Integer.class,t.turma,outro.id));
         mvc.perform(get(BASE+"/turmas").cookie(outro.sessao)).andExpect(status().isUnauthorized());
     }
+    @Test void cancelamentoDeMatriculaImpedeEntregaSemApagarEntregaAnterior() throws Exception {
+        Cookie a=admin(); Turma t=turma(a);
+        long anterior=create(t.professor.sessao,"/atividades",Map.of("turmaId",t.turma,"titulo","Antes do cancelamento","instrucoes","Responder","prazo","2099-12-31T23:59:00Z"));
+        long pendente=create(t.professor.sessao,"/atividades",Map.of("turmaId",t.turma,"titulo","Após cancelamento","instrucoes","Responder","prazo","2099-12-31T23:59:00Z"));
+        long entrega=create(t.aluno.sessao,"/entregas",Map.of("atividadeId",anterior,"conteudo","Histórico preservado"));
+        Long matricula=jdbc.queryForObject("select id from academico_matriculas where turma_id=? and aluno_id=?",Long.class,t.turma,t.aluno.id);
+        send(a,post(BASE+"/matriculas/"+matricula+"/cancelar"),Map.of()).andExpect(status().isOk());
+
+        // A sessão continua válida; quem foi revogado é o vínculo acadêmico.
+        mvc.perform(get(BASE+"/contexto").cookie(t.aluno.sessao)).andExpect(status().isOk());
+        send(t.aluno.sessao,post(BASE+"/entregas"),Map.of("atividadeId",pendente,"conteudo","Envio não autorizado"))
+                .andExpect(status().isForbidden());
+        assertEquals(0,jdbc.queryForObject("select count(*) from academico_entregas where atividade_id=? and aluno_id=?",Integer.class,pendente,t.aluno.id));
+        assertEquals("Histórico preservado",jdbc.queryForObject("select conteudo from academico_entregas where id=?",String.class,entrega));
+        mvc.perform(get(BASE+"/entregas?atividadeId="+anterior).cookie(t.aluno.sessao)).andExpect(status().isForbidden());
+        mvc.perform(get(BASE+"/entregas").cookie(t.aluno.sessao)).andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(0));
+        mvc.perform(get(BASE+"/entregas?atividadeId="+anterior).cookie(t.professor.sessao))
+                .andExpect(status().isOk()).andExpect(jsonPath("$[0].id").value(entrega));
+    }
     @Test void cancelamentoRevogaConteudoEMantemHistorico() throws Exception {
         Cookie a=admin(); Turma t=turma(a);
         Long m=jdbc.queryForObject("select id from academico_matriculas where turma_id=? and aluno_id=?",Long.class,t.turma,t.aluno.id);
