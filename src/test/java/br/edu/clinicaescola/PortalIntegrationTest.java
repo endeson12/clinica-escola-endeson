@@ -183,6 +183,23 @@ class PortalIntegrationTest {
         mvc.perform(get(BASE+"/entregas?atividadeId="+anterior).cookie(t.professor.sessao))
                 .andExpect(status().isOk()).andExpect(jsonPath("$[0].id").value(entrega));
     }
+    @Test void professorComPerfilRevogadoNaoAlteraNotaPublicadaNaMesmaSessao() throws Exception {
+        Cookie a=admin(); Turma t=turma(a);
+        long atividade=create(t.professor.sessao,"/atividades",Map.of("turmaId",t.turma,"titulo","Avaliação antes da revogação","instrucoes","Responder","prazo","2099-12-31T23:59:00Z"));
+        long entrega=create(t.aluno.sessao,"/entregas",Map.of("atividadeId",atividade,"conteudo","Resposta preservada"));
+        send(t.professor.sessao,put(BASE+"/entregas/"+entrega+"/avaliacao"),Map.of("nota",8.5,"feedback","Avaliação original","publicada",true)).andExpect(status().isOk());
+        jdbc.update("update academico_perfis set perfil='ALUNO' where usuario_id=? and unidade_id=?",t.professor.id,unidade("JOQUEI"));
+
+        mvc.perform(get(BASE+"/contexto").cookie(t.professor.sessao)).andExpect(status().isOk())
+                .andExpect(jsonPath("$.usuario.perfil").value("ALUNO"));
+        send(t.professor.sessao,put(BASE+"/entregas/"+entrega+"/avaliacao"),Map.of("nota",1,"feedback","Alteração não autorizada","publicada",false))
+                .andExpect(status().isForbidden());
+        assertEquals(8.5,jdbc.queryForObject("select nota from academico_entregas where id=?",Double.class,entrega));
+        assertEquals("Avaliação original",jdbc.queryForObject("select feedback from academico_entregas where id=?",String.class,entrega));
+        assertEquals(Boolean.TRUE,jdbc.queryForObject("select publicada from academico_entregas where id=?",Boolean.class,entrega));
+        mvc.perform(get(BASE+"/boletim").cookie(t.aluno.sessao)).andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].nota").value(8.5)).andExpect(jsonPath("$[0].turma_id").value(t.turma));
+    }
     @Test void cancelamentoRevogaConteudoEMantemHistorico() throws Exception {
         Cookie a=admin(); Turma t=turma(a);
         Long m=jdbc.queryForObject("select id from academico_matriculas where turma_id=? and aluno_id=?",Long.class,t.turma,t.aluno.id);
