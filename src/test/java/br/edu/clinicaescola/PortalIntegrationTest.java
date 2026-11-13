@@ -200,6 +200,28 @@ class PortalIntegrationTest {
         mvc.perform(get(BASE+"/boletim").cookie(t.aluno.sessao)).andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].nota").value(8.5)).andExpect(jsonPath("$[0].turma_id").value(t.turma));
     }
+    @Test void trocaDeDocenteRevogaAvaliacaoAnteriorEPreservaHistoricoParaNovoProfessor() throws Exception {
+        Cookie a=admin(); Turma t=turma(a); Pessoa novo=pessoa(a,"PROFESSOR");
+        long atividade=create(t.professor.sessao,"/atividades",Map.of("turmaId",t.turma,"titulo","Troca de docente","instrucoes","Responder","prazo","2099-12-31T23:59:00Z"));
+        long entrega=create(t.aluno.sessao,"/entregas",Map.of("atividadeId",atividade,"conteudo","Histórico da turma"));
+        send(t.professor.sessao,put(BASE+"/entregas/"+entrega+"/avaliacao"),Map.of("nota",8.5,"feedback","Avaliação preservada","publicada",true)).andExpect(status().isOk());
+        send(a,put(BASE+"/turmas/"+t.turma),Map.of("disciplinaId",t.disciplina,"professorId",novo.id,"nome","Turma reatribuída "+UUID.randomUUID(),"periodo","2026.2","vagas",30)).andExpect(status().isOk());
+
+        // O perfil e a sessão permanecem válidos; somente a responsabilidade pela turma mudou via API.
+        mvc.perform(get(BASE+"/contexto").cookie(t.professor.sessao)).andExpect(status().isOk())
+                .andExpect(jsonPath("$.usuario.perfil").value("PROFESSOR"));
+        mvc.perform(get(BASE+"/entregas?atividadeId="+atividade).cookie(t.professor.sessao)).andExpect(status().isForbidden());
+        send(t.professor.sessao,put(BASE+"/entregas/"+entrega+"/avaliacao"),Map.of("nota",1,"feedback","Intrusão após troca","publicada",false)).andExpect(status().isForbidden());
+        assertEquals(8.5,jdbc.queryForObject("select nota from academico_entregas where id=?",Double.class,entrega));
+        assertEquals("Avaliação preservada",jdbc.queryForObject("select feedback from academico_entregas where id=?",String.class,entrega));
+        assertEquals(Boolean.TRUE,jdbc.queryForObject("select publicada from academico_entregas where id=?",Boolean.class,entrega));
+        mvc.perform(get(BASE+"/entregas?atividadeId="+atividade).cookie(novo.sessao)).andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(entrega)).andExpect(jsonPath("$[0].conteudo").value("Histórico da turma"));
+        send(novo.sessao,put(BASE+"/entregas/"+entrega+"/avaliacao"),Map.of("nota",9,"feedback","Revisão pelo novo docente","publicada",true)).andExpect(status().isOk());
+        mvc.perform(get(BASE+"/boletim").cookie(t.aluno.sessao)).andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].nota").value(9)).andExpect(jsonPath("$[0].turma_id").value(t.turma));
+        assertEquals(9.0,jdbc.queryForObject("select nota from academico_entregas where id=?",Double.class,entrega));
+    }
     @Test void cancelamentoRevogaConteudoEMantemHistorico() throws Exception {
         Cookie a=admin(); Turma t=turma(a);
         Long m=jdbc.queryForObject("select id from academico_matriculas where turma_id=? and aluno_id=?",Long.class,t.turma,t.aluno.id);
