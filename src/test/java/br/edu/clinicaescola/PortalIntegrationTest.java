@@ -222,6 +222,39 @@ class PortalIntegrationTest {
                 .andExpect(jsonPath("$[0].nota").value(9)).andExpect(jsonPath("$[0].turma_id").value(t.turma));
         assertEquals(9.0,jdbc.queryForObject("select nota from academico_entregas where id=?",Double.class,entrega));
     }
+    @Test void retirarPublicacaoOcultaNotaNaMesmaSessaoSemApagarAvaliacao() throws Exception {
+        Cookie a=admin(); Turma t=turma(a);
+        long atividade=create(t.professor.sessao,"/atividades",Map.of("turmaId",t.turma,"titulo","Revisão de publicação","instrucoes","Responder","prazo","2099-12-31T23:59:00Z"));
+        long entrega=create(t.aluno.sessao,"/entregas",Map.of("atividadeId",atividade,"conteudo","Resposta preservada"));
+        send(t.professor.sessao,put(BASE+"/entregas/"+entrega+"/avaliacao"),Map.of("nota",8.5,"feedback","Avaliação para revisão","publicada",true)).andExpect(status().isOk());
+        mvc.perform(get(BASE+"/boletim").cookie(t.aluno.sessao)).andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(entrega)).andExpect(jsonPath("$[0].nota").value(8.5));
+        mvc.perform(get(BASE+"/entregas?atividadeId="+atividade).cookie(t.aluno.sessao)).andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].nota").value(8.5)).andExpect(jsonPath("$[0].feedback").value("Avaliação para revisão"));
+
+        send(t.professor.sessao,put(BASE+"/entregas/"+entrega+"/avaliacao"),Map.of("nota",8.5,"feedback","Avaliação para revisão","publicada",false)).andExpect(status().isOk());
+        // Reutiliza a sessão que já tinha consultado a nota publicada.
+        mvc.perform(get(BASE+"/boletim").cookie(t.aluno.sessao)).andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(0));
+        for(String rota:List.of("/entregas","/entregas?atividadeId="+atividade))
+            mvc.perform(get(BASE+rota).cookie(t.aluno.sessao)).andExpect(status().isOk())
+                    .andExpect(jsonPath("$[0].id").value(entrega)).andExpect(jsonPath("$[0].conteudo").value("Resposta preservada"))
+                    .andExpect(jsonPath("$[0].publicada").value(false)).andExpect(jsonPath("$[0].nota").doesNotExist())
+                    .andExpect(jsonPath("$[0].feedback").doesNotExist());
+        assertEquals(8.5,jdbc.queryForObject("select nota from academico_entregas where id=?",Double.class,entrega));
+        assertEquals("Avaliação para revisão",jdbc.queryForObject("select feedback from academico_entregas where id=?",String.class,entrega));
+        assertEquals(Boolean.FALSE,jdbc.queryForObject("select publicada from academico_entregas where id=?",Boolean.class,entrega));
+        mvc.perform(get(BASE+"/entregas?atividadeId="+atividade).cookie(t.professor.sessao)).andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].nota").value(8.5)).andExpect(jsonPath("$[0].feedback").value("Avaliação para revisão"));
+
+        send(t.professor.sessao,put(BASE+"/entregas/"+entrega+"/avaliacao"),Map.of("nota",9,"feedback","Revisão publicada","publicada",true)).andExpect(status().isOk());
+        mvc.perform(get(BASE+"/boletim").cookie(t.aluno.sessao)).andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(entrega)).andExpect(jsonPath("$[0].nota").value(9))
+                .andExpect(jsonPath("$[0].feedback").value("Revisão publicada"));
+        mvc.perform(get(BASE+"/entregas?atividadeId="+atividade).cookie(t.aluno.sessao)).andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].publicada").value(true)).andExpect(jsonPath("$[0].nota").value(9))
+                .andExpect(jsonPath("$[0].feedback").value("Revisão publicada"));
+        assertEquals(9.0,jdbc.queryForObject("select nota from academico_entregas where id=?",Double.class,entrega));
+    }
     @Test void cancelamentoRevogaConteudoEMantemHistorico() throws Exception {
         Cookie a=admin(); Turma t=turma(a);
         Long m=jdbc.queryForObject("select id from academico_matriculas where turma_id=? and aluno_id=?",Long.class,t.turma,t.aluno.id);
