@@ -255,6 +255,40 @@ class PortalIntegrationTest {
                 .andExpect(jsonPath("$[0].feedback").value("Revisão publicada"));
         assertEquals(9.0,jdbc.queryForObject("select nota from academico_entregas where id=?",Double.class,entrega));
     }
+    @Test void colegasDaMesmaTurmaRecebemSomenteSuasEntregasENotas() throws Exception {
+        Cookie a=admin(); Turma t=turma(a); Pessoa colega=pessoa(a,"ALUNO");
+        create(a,"/matriculas",Map.of("turmaId",t.turma,"alunoId",colega.id));
+        long atividade=create(t.professor.sessao,"/atividades",Map.of("turmaId",t.turma,"titulo","Isolamento na mesma turma","instrucoes","Resposta individual","prazo","2099-12-31T23:59:00Z"));
+        long primeira=create(t.aluno.sessao,"/entregas",Map.of("atividadeId",atividade,"conteudo","Resposta privada A"));
+        long segunda=create(colega.sessao,"/entregas",Map.of("atividadeId",atividade,"conteudo","Resposta privada B"));
+        send(t.professor.sessao,put(BASE+"/entregas/"+primeira+"/avaliacao"),Map.of("nota",8.5,"feedback","Feedback privado A","publicada",true)).andExpect(status().isOk());
+        send(t.professor.sessao,put(BASE+"/entregas/"+segunda+"/avaliacao"),Map.of("nota",6,"feedback","Feedback privado B","publicada",true)).andExpect(status().isOk());
+
+        // Ambos têm matrícula na MESMA turma: o filtro deve isolar a pessoa, não só a turma.
+        Pessoa[] alunos={t.aluno,colega}; long[] ids={primeira,segunda}; double[] notas={8.5,6};
+        String[] respostas={"Resposta privada A","Resposta privada B"};
+        String[] feedbacks={"Feedback privado A","Feedback privado B"};
+        for(int i=0;i<alunos.length;i++) {
+            for(String rota:List.of("/entregas","/entregas?atividadeId="+atividade))
+                mvc.perform(get(BASE+rota).cookie(alunos[i].sessao)).andExpect(status().isOk())
+                        .andExpect(jsonPath("$.length()").value(1)).andExpect(jsonPath("$[0].id").value(ids[i]))
+                        .andExpect(jsonPath("$[0].conteudo").value(respostas[i])).andExpect(jsonPath("$[0].nota").value(notas[i]))
+                        .andExpect(jsonPath("$[0].feedback").value(feedbacks[i]));
+            mvc.perform(get(BASE+"/boletim").cookie(alunos[i].sessao)).andExpect(status().isOk())
+                    .andExpect(jsonPath("$.length()").value(1)).andExpect(jsonPath("$[0].id").value(ids[i]))
+                    .andExpect(jsonPath("$[0].nota").value(notas[i])).andExpect(jsonPath("$[0].feedback").value(feedbacks[i]));
+            mvc.perform(get(BASE+"/boletim?alunoId="+alunos[1-i].id).cookie(alunos[i].sessao)).andExpect(status().isForbidden());
+            send(alunos[i].sessao,put(BASE+"/entregas/"+ids[1-i]+"/avaliacao"),Map.of("nota",0,"feedback","Intrusão","publicada",false)).andExpect(status().isForbidden());
+        }
+        mvc.perform(get(BASE+"/entregas?atividadeId="+atividade).cookie(t.professor.sessao)).andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(2));
+        for(int i=0;i<ids.length;i++) {
+            assertEquals(notas[i],jdbc.queryForObject("select nota from academico_entregas where id=?",Double.class,ids[i]));
+            assertEquals(feedbacks[i],jdbc.queryForObject("select feedback from academico_entregas where id=?",String.class,ids[i]));
+            assertEquals(Boolean.TRUE,jdbc.queryForObject("select publicada from academico_entregas where id=?",Boolean.class,ids[i]));
+            assertEquals(respostas[i],jdbc.queryForObject("select conteudo from academico_entregas where id=?",String.class,ids[i]));
+        }
+    }
     @Test void cancelamentoRevogaConteudoEMantemHistorico() throws Exception {
         Cookie a=admin(); Turma t=turma(a);
         Long m=jdbc.queryForObject("select id from academico_matriculas where turma_id=? and aluno_id=?",Long.class,t.turma,t.aluno.id);
