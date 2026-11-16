@@ -478,10 +478,14 @@
       : empty(
           query
             ? "Nenhum resultado para esta busca."
-            : "Ainda não há registros.",
+            : current === "entregas" && state().params.get("situacao")
+              ? "Nenhuma entrega nesta situação."
+              : "Ainda não há registros.",
           query
             ? "Tente outro nome, código ou termo."
-            : "Os registros aparecerão aqui depois de cadastrados.",
+            : current === "entregas" && state().params.get("situacao")
+              ? "Altere a situação ou limpe os filtros para consultar outras entregas."
+              : "Os registros aparecerão aqui depois de cadastrados.",
         );
   }
   function wireTable() {
