@@ -278,8 +278,8 @@
   function columns() {
     const actions = (items) =>
       `<div class="row-actions">${items.join("")}</div>`;
-    const btn = (action, id, label, extra = "") =>
-      `<button class="btn small ${extra}" data-action="${action}" data-id="${Number(id)}">${esc(label)}</button>`;
+    const btn = (action, id, label, extra = "", accessible = "") =>
+      `<button class="btn small ${extra}" data-action="${action}" data-id="${Number(id)}"${accessible ? ` aria-label="${esc(accessible)}"` : ""}>${esc(label)}</button>`;
     return (
       {
         pessoas: [
@@ -401,8 +401,8 @@
             "",
             (r) =>
               actions([
-                btn("read-delivery", r.id, "Ler"),
-                ...(!is("ALUNO") ? [btn("grade", r.id, "Avaliar")] : []),
+                btn("read-delivery", r.id, "Ler", "", `Ler entrega de ${r.aluno_nome} — ${r.atividade_titulo}`),
+                ...(!is("ALUNO") ? [btn("grade", r.id, "Avaliar", "", `Avaliar entrega de ${r.aluno_nome} — ${r.atividade_titulo}`)] : []),
               ]),
           ],
         ],
