@@ -271,15 +271,15 @@
   function shellTable() {
     const status = state().params.get("situacao") || "";
     const evaluation = current === "entregas"
-      ? `<label class="service-filter">Situação da avaliação<select id="evaluation-status" aria-label="Situação da avaliação"><option value="">Todas</option>${[["PENDENTE", is("ALUNO") ? "Aguardando avaliação" : "Pendentes de avaliação"], ...(!is("ALUNO") ? [["RASCUNHO", "Rascunhos"]] : []), ["PUBLICADA", "Publicadas"]].map(([value, label]) => `<option value="${value}"${status === value ? " selected" : ""}>${label}</option>`).join("")}</select></label>`
+      ? `<label class="service-filter">Situação da avaliação<select id="evaluation-status" aria-label="Situação da avaliação" aria-describedby="evaluation-help"><option value="">Todas</option>${[["PENDENTE", is("ALUNO") ? "Aguardando avaliação" : "Pendentes de avaliação"], ...(!is("ALUNO") ? [["RASCUNHO", "Rascunhos"]] : []), ["PUBLICADA", "Publicadas"]].map(([value, label]) => `<option value="${value}"${status === value ? " selected" : ""}>${label}</option>`).join("")}</select></label><p id="evaluation-help" class="toolbar-meta">${is("ALUNO") ? "Rascunhos e feedback não publicados são privados da equipe docente. Aguardando inclui avaliações ainda não publicadas." : "Nota zero é válida. Rascunhos só ficam visíveis ao aluno depois de publicar."}</p>`
       : "";
-    return `<section class="panel"><div class="toolbar">${evaluation}<label class="search">${icon("search")}<input type="search" id="table-search" aria-label="Buscar nesta lista" placeholder="Buscar nesta lista…" value="${esc(query)}" autocomplete="off"></label><span class="toolbar-meta">Registros desta unidade · até 1.000 por consulta</span></div><div id="table-results"></div></section>`;
+    return `<section class="panel"><div class="toolbar">${evaluation}${current === "entregas" && (query || status) ? '<button class="btn small" id="clear-evaluation">Limpar busca e situação</button>' : ""}<label class="search">${icon("search")}<input type="search" id="table-search" aria-label="Buscar nesta lista" placeholder="Buscar nesta lista…" value="${esc(query)}" autocomplete="off"></label><span class="toolbar-meta">Registros desta unidade · até 1.000 por consulta</span></div><p id="result-count" class="toolbar-meta" aria-live="polite" aria-atomic="true"></p><div id="table-results"></div></section>`;
   }
   function columns() {
     const actions = (items) =>
       `<div class="row-actions">${items.join("")}</div>`;
-    const btn = (action, id, label, extra = "") =>
-      `<button class="btn small ${extra}" data-action="${action}" data-id="${Number(id)}">${esc(label)}</button>`;
+    const btn = (action, id, label, extra = "", accessible = "") =>
+      `<button class="btn small ${extra}" data-action="${action}" data-id="${Number(id)}"${accessible ? ` aria-label="${esc(accessible)}"` : ""}>${esc(label)}</button>`;
     return (
       {
         pessoas: [
@@ -401,8 +401,8 @@
             "",
             (r) =>
               actions([
-                btn("read-delivery", r.id, "Ler"),
-                ...(!is("ALUNO") ? [btn("grade", r.id, "Avaliar")] : []),
+                btn("read-delivery", r.id, "Ler", "", `Ler entrega de ${r.aluno_nome} — ${r.atividade_titulo}`),
+                ...(!is("ALUNO") ? [btn("grade", r.id, "Avaliar", "", `Avaliar entrega de ${r.aluno_nome} — ${r.atividade_titulo}`)] : []),
               ]),
           ],
         ],
@@ -460,32 +460,43 @@
       }[current] || []
     );
   }
+  function searchable(value) {
+    return String(value).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("pt-BR");
+  }
   function drawTable() {
     const cols = columns();
     let list = rows.filter((r) =>
-      Object.values(r)
-        .join(" ")
-        .toLocaleLowerCase("pt-BR")
-        .includes(query.toLocaleLowerCase("pt-BR")),
+      searchable(Object.values(r).join(" ")).includes(searchable(query.trim())),
     );
     if (current === "financeiro")
       list = list.filter((r) => r.status === financeFilter);
     const pages = Math.max(1, Math.ceil(list.length / 12));
     page = Math.min(Math.max(1, page), pages);
     const slice = list.slice((page - 1) * 12, page * 12);
+    const count = $("#result-count");
+    if (count) count.textContent = `${list.length} ${list.length === 1 ? "registro" : "registros"} nesta consulta · página ${page} de ${pages}`;
     $("#table-results").innerHTML = list.length
-      ? `<div class="table-wrap"><table><thead><tr>${cols.map(([label]) => `<th scope="col">${esc(label || "Ações")}</th>`).join("")}</tr></thead><tbody>${slice.map((r) => `<tr>${cols.map(([, render]) => `<td>${render(r)}</td>`).join("")}</tr>`).join("")}</tbody></table></div><div class="pagination"><span>${list.length} ${list.length === 1 ? "registro" : "registros"} · página ${page} de ${pages}</span><div><button class="btn small" data-page="${page - 1}" ${page === 1 ? "disabled" : ""} aria-label="Página anterior">←</button><button class="btn small" data-page="${page + 1}" ${page === pages ? "disabled" : ""} aria-label="Próxima página">→</button></div></div>`
+      ? `<div class="table-wrap"><table><caption>${esc(routes[current].name)} — registros desta unidade</caption><thead><tr>${cols.map(([label]) => `<th scope="col">${esc(label || "Ações")}</th>`).join("")}</tr></thead><tbody>${slice.map((r) => `<tr>${cols.map(([, render]) => `<td>${render(r)}</td>`).join("")}</tr>`).join("")}</tbody></table></div><div class="pagination"><span>${list.length} ${list.length === 1 ? "registro" : "registros"} · página ${page} de ${pages}</span><div><button class="btn small" data-page="${page - 1}" ${page === 1 ? "disabled" : ""} aria-label="Página anterior">←</button><button class="btn small" data-page="${page + 1}" ${page === pages ? "disabled" : ""} aria-label="Próxima página">→</button></div></div>`
       : empty(
           query
             ? "Nenhum resultado para esta busca."
-            : "Ainda não há registros.",
+            : current === "entregas" && state().params.get("situacao")
+              ? "Nenhuma entrega nesta situação."
+              : "Ainda não há registros.",
           query
             ? "Tente outro nome, código ou termo."
-            : "Os registros aparecerão aqui depois de cadastrados.",
+            : current === "entregas" && state().params.get("situacao")
+              ? "Altere a situação ou limpe os filtros para consultar outras entregas."
+              : "Os registros aparecerão aqui depois de cadastrados.",
         );
   }
   function wireTable() {
     drawTable();
+    $("#clear-evaluation")?.addEventListener("click", () => {
+      const s = state();
+      for (const key of ["busca", "situacao", "pagina"]) s.params.delete(key);
+      location.hash = s.route + (s.params.size ? "?" + s.params : "");
+    });
     $("#evaluation-status")?.addEventListener("change", (e) => {
       const s = state();
       if (e.target.value) s.params.set("situacao", e.target.value);
@@ -642,6 +653,12 @@
   async function render() {
     const seq = ++renderSequence;
     const s = state();
+    if (s.route === "entregas" && s.params.has("situacao")) {
+      const value = s.params.get("situacao").trim().toUpperCase();
+      if (value) s.params.set("situacao", value);
+      else s.params.delete("situacao");
+      history.replaceState(null, "", "#" + s.route + (s.params.size ? "?" + s.params : ""));
+    }
     current = s.route;
     query = s.params.get("busca") || "";
     page = Number(s.params.get("pagina")) || 1;
@@ -692,6 +709,13 @@
           : "");
       main.innerHTML =
         heading(r.name, r.desc, action) +
+        (current === "entregas" && s.params.has("atividade")
+          ? (() => {
+              const remaining = new URLSearchParams(s.params);
+              remaining.delete("atividade"); remaining.delete("pagina");
+              return `<p><a href="#entregas${remaining.size ? "?" + esc(remaining.toString()) : ""}">Todas as atividades</a></p>`;
+            })()
+          : "") +
         (s.params.get("turma")
           ? '<p style="margin:-10px 0 20px"><a href="#' +
             current +
