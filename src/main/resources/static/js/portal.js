@@ -273,7 +273,7 @@
     const evaluation = current === "entregas"
       ? `<label class="service-filter">Situação da avaliação<select id="evaluation-status" aria-label="Situação da avaliação"><option value="">Todas</option>${[["PENDENTE", is("ALUNO") ? "Aguardando avaliação" : "Pendentes de avaliação"], ...(!is("ALUNO") ? [["RASCUNHO", "Rascunhos"]] : []), ["PUBLICADA", "Publicadas"]].map(([value, label]) => `<option value="${value}"${status === value ? " selected" : ""}>${label}</option>`).join("")}</select></label>`
       : "";
-    return `<section class="panel"><div class="toolbar">${evaluation}${current === "entregas" && (query || status) ? '<button class="btn small" id="clear-evaluation">Limpar busca e situação</button>' : ""}<label class="search">${icon("search")}<input type="search" id="table-search" aria-label="Buscar nesta lista" placeholder="Buscar nesta lista…" value="${esc(query)}" autocomplete="off"></label><span class="toolbar-meta">Registros desta unidade · até 1.000 por consulta</span></div><div id="table-results"></div></section>`;
+    return `<section class="panel"><div class="toolbar">${evaluation}${current === "entregas" && (query || status) ? '<button class="btn small" id="clear-evaluation">Limpar busca e situação</button>' : ""}<label class="search">${icon("search")}<input type="search" id="table-search" aria-label="Buscar nesta lista" placeholder="Buscar nesta lista…" value="${esc(query)}" autocomplete="off"></label><span class="toolbar-meta">Registros desta unidade · até 1.000 por consulta</span></div><p id="result-count" class="toolbar-meta" aria-live="polite" aria-atomic="true"></p><div id="table-results"></div></section>`;
   }
   function columns() {
     const actions = (items) =>
@@ -473,6 +473,8 @@
     const pages = Math.max(1, Math.ceil(list.length / 12));
     page = Math.min(Math.max(1, page), pages);
     const slice = list.slice((page - 1) * 12, page * 12);
+    const count = $("#result-count");
+    if (count) count.textContent = `${list.length} ${list.length === 1 ? "registro" : "registros"} nesta consulta · página ${page} de ${pages}`;
     $("#table-results").innerHTML = list.length
       ? `<div class="table-wrap"><table><thead><tr>${cols.map(([label]) => `<th scope="col">${esc(label || "Ações")}</th>`).join("")}</tr></thead><tbody>${slice.map((r) => `<tr>${cols.map(([, render]) => `<td>${render(r)}</td>`).join("")}</tr>`).join("")}</tbody></table></div><div class="pagination"><span>${list.length} ${list.length === 1 ? "registro" : "registros"} · página ${page} de ${pages}</span><div><button class="btn small" data-page="${page - 1}" ${page === 1 ? "disabled" : ""} aria-label="Página anterior">←</button><button class="btn small" data-page="${page + 1}" ${page === pages ? "disabled" : ""} aria-label="Próxima página">→</button></div></div>`
       : empty(
