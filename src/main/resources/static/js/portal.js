@@ -642,6 +642,12 @@
   async function render() {
     const seq = ++renderSequence;
     const s = state();
+    if (s.route === "entregas" && s.params.has("situacao")) {
+      const value = s.params.get("situacao").trim().toUpperCase();
+      if (value) s.params.set("situacao", value);
+      else s.params.delete("situacao");
+      history.replaceState(null, "", "#" + s.route + (s.params.size ? "?" + s.params : ""));
+    }
     current = s.route;
     query = s.params.get("busca") || "";
     page = Number(s.params.get("pagina")) || 1;
