@@ -46,7 +46,7 @@ public class PortalController {
     @PostMapping("/atividades") @ResponseStatus(HttpStatus.CREATED)
     public Map<String,Object> criarAtividade(Authentication a,@Valid @RequestBody Atividade r) { return learning.atividade(c(a),null,r); }
     @PutMapping("/atividades/{id}") public Map<String,Object> editarAtividade(Authentication a,@PathVariable long id,@Valid @RequestBody Atividade r) { return learning.atividade(c(a),id,r); }
-    @GetMapping("/entregas") public List<Map<String,Object>> entregas(Authentication a,@RequestParam(required=false) Long atividadeId) { return learning.entregas(c(a),atividadeId); }
+    @GetMapping("/entregas") public List<Map<String,Object>> entregas(Authentication a,@RequestParam(required=false) Long atividadeId,@RequestParam(required=false) String situacao) { return learning.entregas(c(a),atividadeId,situacao); }
     @PostMapping("/entregas") @ResponseStatus(HttpStatus.CREATED)
     public Map<String,Object> entregar(Authentication a,@Valid @RequestBody Entrega r) { return learning.entregar(c(a),r); }
     @PutMapping("/entregas/{id}/avaliacao") public Map<String,Object> avaliar(Authentication a,@PathVariable long id,@Valid @RequestBody Avaliacao r) { return learning.avaliar(c(a),id,r); }

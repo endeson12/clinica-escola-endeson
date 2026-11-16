@@ -59,6 +59,26 @@ class PortalIntegrationTest {
         create(a,"/matriculas",Map.of("turmaId",t,"alunoId",aluno.id));
         return new Turma(c,d,t,p,aluno);
     }
+    @Test void filaDeAvaliacaoFiltraSemRevelarRascunhosAoAluno() throws Exception {
+        Cookie a=admin(); Turma t=turma(a);
+        long at=create(t.professor.sessao,"/atividades",Map.of("turmaId",t.turma,"titulo","Fila de avaliação","instrucoes","Responder","prazo","2099-12-31T23:59:00Z"));
+        long e=create(t.aluno.sessao,"/entregas",Map.of("atividadeId",at,"conteudo","Resposta"));
+        String rota=BASE+"/entregas?atividadeId="+at;
+        mvc.perform(get(rota+"&situacao=PENDENTE").cookie(t.professor.sessao)).andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(1));
+        mvc.perform(get(rota+"&situacao=PUBLICADA").cookie(t.professor.sessao)).andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(0));
+        send(t.professor.sessao,put(BASE+"/entregas/"+e+"/avaliacao"),Map.of("nota",0,"feedback","Privado","publicada",false)).andExpect(status().isOk());
+        mvc.perform(get(rota+"&situacao=RASCUNHO").cookie(t.professor.sessao)).andExpect(status().isOk()).andExpect(jsonPath("$[0].nota").value(0));
+        mvc.perform(get(rota+"&situacao=PENDENTE").cookie(t.professor.sessao)).andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(0));
+        mvc.perform(get(rota+"&situacao=PENDENTE").cookie(t.aluno.sessao)).andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(1)).andExpect(jsonPath("$[0].nota").doesNotExist());
+        mvc.perform(get(rota+"&situacao=RASCUNHO").cookie(t.aluno.sessao)).andExpect(status().isForbidden());
+        mvc.perform(get(rota+"&situacao=INVALIDA").cookie(a)).andExpect(status().isBadRequest());
+        Pessoa outro=pessoa(a,"PROFESSOR");
+        mvc.perform(get(rota+"&situacao=RASCUNHO").cookie(outro.sessao)).andExpect(status().isForbidden());
+        mvc.perform(get(rota+"&situacao=RASCUNHO").cookie(login("admin.teste@clinica.local","REDENCAO"))).andExpect(status().isNotFound());
+        send(t.professor.sessao,put(BASE+"/entregas/"+e+"/avaliacao"),Map.of("nota",0,"feedback","Publicado","publicada",true)).andExpect(status().isOk());
+        mvc.perform(get(rota+"&situacao=PUBLICADA").cookie(t.aluno.sessao)).andExpect(status().isOk()).andExpect(jsonPath("$[0].nota").value(0));
+        mvc.perform(get(rota+"&situacao=PENDENTE").cookie(t.aluno.sessao)).andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(0));
+    }
     @Test void contextoExigeLoginEPreservaPerfilAdmin() throws Exception {
         mvc.perform(get(BASE+"/contexto")).andExpect(status().isUnauthorized());
         mvc.perform(get(BASE+"/contexto").cookie(admin())).andExpect(status().isOk())
