@@ -476,7 +476,7 @@
     const count = $("#result-count");
     if (count) count.textContent = `${list.length} ${list.length === 1 ? "registro" : "registros"} nesta consulta · página ${page} de ${pages}`;
     $("#table-results").innerHTML = list.length
-      ? `<div class="table-wrap"><table><thead><tr>${cols.map(([label]) => `<th scope="col">${esc(label || "Ações")}</th>`).join("")}</tr></thead><tbody>${slice.map((r) => `<tr>${cols.map(([, render]) => `<td>${render(r)}</td>`).join("")}</tr>`).join("")}</tbody></table></div><div class="pagination"><span>${list.length} ${list.length === 1 ? "registro" : "registros"} · página ${page} de ${pages}</span><div><button class="btn small" data-page="${page - 1}" ${page === 1 ? "disabled" : ""} aria-label="Página anterior">←</button><button class="btn small" data-page="${page + 1}" ${page === pages ? "disabled" : ""} aria-label="Próxima página">→</button></div></div>`
+      ? `<div class="table-wrap"><table><caption>${esc(routes[current].name)} — registros desta unidade</caption><thead><tr>${cols.map(([label]) => `<th scope="col">${esc(label || "Ações")}</th>`).join("")}</tr></thead><tbody>${slice.map((r) => `<tr>${cols.map(([, render]) => `<td>${render(r)}</td>`).join("")}</tr>`).join("")}</tbody></table></div><div class="pagination"><span>${list.length} ${list.length === 1 ? "registro" : "registros"} · página ${page} de ${pages}</span><div><button class="btn small" data-page="${page - 1}" ${page === 1 ? "disabled" : ""} aria-label="Página anterior">←</button><button class="btn small" data-page="${page + 1}" ${page === pages ? "disabled" : ""} aria-label="Próxima página">→</button></div></div>`
       : empty(
           query
             ? "Nenhum resultado para esta busca."
