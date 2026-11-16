@@ -269,7 +269,11 @@
     );
   }
   function shellTable() {
-    return `<section class="panel"><div class="toolbar"><label class="search">${icon("search")}<input type="search" id="table-search" aria-label="Buscar nesta lista" placeholder="Buscar nesta lista…" value="${esc(query)}" autocomplete="off"></label><span class="toolbar-meta">Registros desta unidade · até 1.000 por consulta</span></div><div id="table-results"></div></section>`;
+    const status = state().params.get("situacao") || "";
+    const evaluation = current === "entregas"
+      ? `<label class="service-filter">Situação da avaliação<select id="evaluation-status" aria-label="Situação da avaliação"><option value="">Todas</option>${[["PENDENTE", is("ALUNO") ? "Aguardando avaliação" : "Pendentes de avaliação"], ...(!is("ALUNO") ? [["RASCUNHO", "Rascunhos"]] : []), ["PUBLICADA", "Publicadas"]].map(([value, label]) => `<option value="${value}"${status === value ? " selected" : ""}>${label}</option>`).join("")}</select></label>`
+      : "";
+    return `<section class="panel"><div class="toolbar">${evaluation}<label class="search">${icon("search")}<input type="search" id="table-search" aria-label="Buscar nesta lista" placeholder="Buscar nesta lista…" value="${esc(query)}" autocomplete="off"></label><span class="toolbar-meta">Registros desta unidade · até 1.000 por consulta</span></div><div id="table-results"></div></section>`;
   }
   function columns() {
     const actions = (items) =>
@@ -482,6 +486,13 @@
   }
   function wireTable() {
     drawTable();
+    $("#evaluation-status")?.addEventListener("change", (e) => {
+      const s = state();
+      if (e.target.value) s.params.set("situacao", e.target.value);
+      else s.params.delete("situacao");
+      s.params.delete("pagina");
+      location.hash = s.route + (s.params.size ? "?" + s.params : "");
+    });
     $("#table-search")?.addEventListener("input", (e) => {
       query = e.target.value;
       page = 1;
@@ -667,6 +678,8 @@
         qs = "?turmaId=" + encodeURIComponent(s.params.get("turma"));
       if (current === "entregas" && s.params.get("atividade"))
         qs = "?atividadeId=" + encodeURIComponent(s.params.get("atividade"));
+      if (current === "entregas" && s.params.get("situacao"))
+        qs += (qs ? "&" : "?") + "situacao=" + encodeURIComponent(s.params.get("situacao"));
       const result = await req("get", "/" + current + qs);
       if (seq !== renderSequence) return;
       rows = result;
