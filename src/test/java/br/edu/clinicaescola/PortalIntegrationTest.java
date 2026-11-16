@@ -125,6 +125,35 @@ class PortalIntegrationTest {
         send(aluno.sessao,post(BASE+"/financeiro"),Map.of("alunoId",aluno.id,"descricao","Fraude","valor",1,"vencimento","2099-01-01")).andExpect(status().isForbidden());
         send(financeiro.sessao,post(BASE+"/financeiro"),Map.of("alunoId",aluno.id,"descricao","Negativo","valor",-1,"vencimento","2099-01-01")).andExpect(status().isBadRequest());
     }
+    @Test void baixaDemonstrativaExigePerfilEUnidadeSemAlterarExtratoOuAuditoriaNasNegativas() throws Exception {
+        Cookie a=admin(); Turma t=turma(a); Pessoa colega=pessoa(a,"ALUNO"), financeiro=pessoa(a,"FINANCEIRO");
+        long lancamento=create(financeiro.sessao,"/financeiro",Map.of("alunoId",t.aluno.id,"descricao","Parcela fictícia de teste","valor",125.50,"vencimento","2099-12-01"));
+        long outro=create(financeiro.sessao,"/financeiro",Map.of("alunoId",colega.id,"descricao","Parcela fictícia do colega","valor",40,"vencimento","2099-12-01"));
+        String estado=jdbc.queryForObject("select status from academico_financeiro where id=?",String.class,lancamento);
+        Integer auditorias=jdbc.queryForObject("select count(*) from academico_auditoria where entidade='financeiro' and registro_id=?",Integer.class,lancamento);
+        mvc.perform(get(BASE+"/financeiro").cookie(t.aluno.sessao)).andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1)).andExpect(jsonPath("$[0].id").value(lancamento));
+        for(Cookie negado:List.of(t.aluno.sessao,colega.sessao,t.professor.sessao)) {
+            send(negado,post(BASE+"/financeiro/"+lancamento+"/baixa-demonstrativa"),Map.of()).andExpect(status().isForbidden());
+        }
+        Cookie outraUnidade=login("admin.teste@clinica.local","REDENCAO");
+        send(outraUnidade,post(BASE+"/financeiro/"+lancamento+"/baixa-demonstrativa"),Map.of()).andExpect(status().isNotFound());
+        assertEquals(estado,jdbc.queryForObject("select status from academico_financeiro where id=?",String.class,lancamento));
+        assertEquals(auditorias,jdbc.queryForObject("select count(*) from academico_auditoria where entidade='financeiro' and registro_id=?",Integer.class,lancamento));
+        mvc.perform(get(BASE+"/financeiro?alunoId="+colega.id).cookie(t.aluno.sessao)).andExpect(status().isForbidden());
+
+        send(financeiro.sessao,post(BASE+"/financeiro/"+lancamento+"/baixa-demonstrativa"),Map.of()).andExpect(status().isOk());
+        mvc.perform(get(BASE+"/financeiro").cookie(t.aluno.sessao)).andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1)).andExpect(jsonPath("$[0].id").value(lancamento))
+                .andExpect(jsonPath("$[0].status").value("BAIXA_DEMONSTRATIVA"))
+                .andExpect(jsonPath("$[0].demonstrativo").value(true));
+        mvc.perform(get(BASE+"/financeiro").cookie(colega.sessao)).andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1)).andExpect(jsonPath("$[0].id").value(outro))
+                .andExpect(jsonPath("$[0].status").value(estado));
+        assertEquals("BAIXA_DEMONSTRATIVA",jdbc.queryForObject("select status from academico_financeiro where id=?",String.class,lancamento));
+        assertEquals(1,jdbc.queryForObject("select count(*) from academico_auditoria where entidade='financeiro' and registro_id=? and acao='BAIXA_DEMONSTRATIVA' and ator_id=? and unidade_id=?",Integer.class,lancamento,financeiro.id,unidade("JOQUEI")));
+        assertEquals(auditorias+1,jdbc.queryForObject("select count(*) from academico_auditoria where entidade='financeiro' and registro_id=?",Integer.class,lancamento));
+    }
     @Test void lotacaoDaTurmaESenhaFracaNaoPassam() throws Exception {
         Cookie a=admin(); Turma t=turma(a); Pessoa outro=pessoa(a,"ALUNO");
         send(a,put(BASE+"/turmas/"+t.turma),Map.of("disciplinaId",t.disciplina,"professorId",t.professor.id,"nome","Turma lotada "+UUID.randomUUID(),"periodo","2026.2","vagas",1)).andExpect(status().isOk());
