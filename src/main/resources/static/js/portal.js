@@ -703,6 +703,13 @@
           : "");
       main.innerHTML =
         heading(r.name, r.desc, action) +
+        (current === "entregas" && s.params.has("atividade")
+          ? (() => {
+              const remaining = new URLSearchParams(s.params);
+              remaining.delete("atividade"); remaining.delete("pagina");
+              return `<p><a href="#entregas${remaining.size ? "?" + esc(remaining.toString()) : ""}">Todas as atividades</a></p>`;
+            })()
+          : "") +
         (s.params.get("turma")
           ? '<p style="margin:-10px 0 20px"><a href="#' +
             current +
