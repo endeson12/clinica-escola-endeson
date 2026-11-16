@@ -1,0 +1,6 @@
+const {test}=require('./harness.cjs');
+test("Q10 Formulário recusa nota inválida e salva zero como rascunho",async({browser,base,tag,admin,teacher,student,p,st,turma,discipline,enrollment,activity,delivery,actor,person,create,get,queue,grade,ready,page,assert})=>{
+const ui=await page();await ui.locator('[data-action="grade"]').click();const input=ui.locator('#field-nota');await input.fill('11');await ui.locator('#field-feedback').fill('Zero rascunho');await ui.locator('#entity-form button[type="submit"]').click();assert.equal(await input.evaluate(e=>e.validity.rangeOverflow),true);assert.equal(await ui.locator('#entity-dialog').evaluate(e=>e.open),true);assert.equal((await queue(teacher,'PENDENTE'))[0].nota,null);
+await input.fill('0');await ui.locator('#entity-form input[type="checkbox"]').uncheck();await ui.locator('#entity-form button[type="submit"]').click();await ui.waitForFunction(()=>!document.querySelector('#entity-dialog').open);await ready(ui);
+assert.equal((await queue(teacher,'RASCUNHO'))[0].nota,0);assert.equal((await queue(student,'PENDENTE'))[0].feedback,null);assert.equal((await get(student,'boletim')).length,0);await ui.reload();await ready(ui);assert.match(await ui.locator('#table-results').innerText(),/Rascunho/);
+}).catch(e=>{console.error(e);process.exitCode=1});
