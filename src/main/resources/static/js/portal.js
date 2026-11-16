@@ -460,13 +460,13 @@
       }[current] || []
     );
   }
+  function searchable(value) {
+    return String(value).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("pt-BR");
+  }
   function drawTable() {
     const cols = columns();
     let list = rows.filter((r) =>
-      Object.values(r)
-        .join(" ")
-        .toLocaleLowerCase("pt-BR")
-        .includes(query.toLocaleLowerCase("pt-BR")),
+      searchable(Object.values(r).join(" ")).includes(searchable(query)),
     );
     if (current === "financeiro")
       list = list.filter((r) => r.status === financeFilter);
