@@ -57,8 +57,20 @@ public class PortalLearningService {
         }
         db.audit(c,"atividade",id(row,"id"),registro==null?"PUBLICAR":"EDITAR"); return row;
     }
-    public List<Map<String,Object>> entregas(PortalAccess.Context c,Long atividade) {
+    public List<Map<String,Object>> entregas(PortalAccess.Context c,Long atividade,String situacao) {
         access.require(c,"ADMIN","COORDENACAO","PROFESSOR","ALUNO");
+        String status=situacao==null?"":situacao.trim().toUpperCase(Locale.ROOT);
+        if(!Set.of("","PENDENTE","RASCUNHO","PUBLICADA").contains(status))
+            throw new BusinessException(HttpStatus.BAD_REQUEST,"situacao","Use PENDENTE, RASCUNHO ou PUBLICADA.");
+        if(c.is("ALUNO")&&status.equals("RASCUNHO"))
+            throw new BusinessException(HttpStatus.FORBIDDEN,"Rascunhos são privados da equipe docente.");
+        // Para o aluno, qualquer avaliação não publicada permanece aguardando.
+        String estado=switch(status) {
+            case "PENDENTE" -> c.is("ALUNO")?" and not e.publicada":" and not e.publicada and e.nota is null";
+            case "RASCUNHO" -> " and not e.publicada and e.nota is not null";
+            case "PUBLICADA" -> " and e.publicada";
+            default -> "";
+        };
         if(atividade!=null) {
             Map<String,Object> a=db.one("select turma_id from academico_atividades where id=? and unidade_id=?",atividade,c.unidade());
             access.turma(c,id(a,"turma_id"));
@@ -72,7 +84,7 @@ public class PortalLearningService {
             from academico_entregas e join academico_atividades a on a.id=e.atividade_id
             join academico_turmas t on t.id=a.turma_id join usuarios u on u.id=e.aluno_id
             where e.unidade_id=?
-            """+scope+" order by e.id desc limit 1000",!c.is("ALUNO"),!c.is("ALUNO"),c.unidade());
+            """+scope+estado+" order by e.id desc limit 1000",!c.is("ALUNO"),!c.is("ALUNO"),c.unidade());
     }
     @Transactional public Map<String,Object> entregar(PortalAccess.Context c,Entrega r) {
         access.require(c,"ALUNO");
