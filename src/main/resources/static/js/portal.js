@@ -466,7 +466,7 @@
   function drawTable() {
     const cols = columns();
     let list = rows.filter((r) =>
-      searchable(Object.values(r).join(" ")).includes(searchable(query)),
+      searchable(Object.values(r).join(" ")).includes(searchable(query.trim())),
     );
     if (current === "financeiro")
       list = list.filter((r) => r.status === financeFilter);
