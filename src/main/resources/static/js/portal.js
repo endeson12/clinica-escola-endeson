@@ -273,7 +273,7 @@
     const evaluation = current === "entregas"
       ? `<label class="service-filter">Situação da avaliação<select id="evaluation-status" aria-label="Situação da avaliação"><option value="">Todas</option>${[["PENDENTE", is("ALUNO") ? "Aguardando avaliação" : "Pendentes de avaliação"], ...(!is("ALUNO") ? [["RASCUNHO", "Rascunhos"]] : []), ["PUBLICADA", "Publicadas"]].map(([value, label]) => `<option value="${value}"${status === value ? " selected" : ""}>${label}</option>`).join("")}</select></label>`
       : "";
-    return `<section class="panel"><div class="toolbar">${evaluation}<label class="search">${icon("search")}<input type="search" id="table-search" aria-label="Buscar nesta lista" placeholder="Buscar nesta lista…" value="${esc(query)}" autocomplete="off"></label><span class="toolbar-meta">Registros desta unidade · até 1.000 por consulta</span></div><div id="table-results"></div></section>`;
+    return `<section class="panel"><div class="toolbar">${evaluation}${current === "entregas" && (query || status) ? '<button class="btn small" id="clear-evaluation">Limpar busca e situação</button>' : ""}<label class="search">${icon("search")}<input type="search" id="table-search" aria-label="Buscar nesta lista" placeholder="Buscar nesta lista…" value="${esc(query)}" autocomplete="off"></label><span class="toolbar-meta">Registros desta unidade · até 1.000 por consulta</span></div><div id="table-results"></div></section>`;
   }
   function columns() {
     const actions = (items) =>
@@ -486,6 +486,11 @@
   }
   function wireTable() {
     drawTable();
+    $("#clear-evaluation")?.addEventListener("click", () => {
+      const s = state();
+      for (const key of ["busca", "situacao", "pagina"]) s.params.delete(key);
+      location.hash = s.route + (s.params.size ? "?" + s.params : "");
+    });
     $("#evaluation-status")?.addEventListener("change", (e) => {
       const s = state();
       if (e.target.value) s.params.set("situacao", e.target.value);
