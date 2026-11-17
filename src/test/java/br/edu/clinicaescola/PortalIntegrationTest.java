@@ -318,6 +318,35 @@ class PortalIntegrationTest {
             assertEquals(respostas[i],jdbc.queryForObject("select conteudo from academico_entregas where id=?",String.class,ids[i]));
         }
     }
+    @Test void carteirinhaRefleteSomenteCursosAtivosNaMesmaSessaoSemExporColega() throws Exception {
+        Cookie a=admin(); Turma primeira=turma(a), segunda=turma(a);
+        long extra=create(a,"/matriculas",Map.of("turmaId",segunda.turma,"alunoId",primeira.aluno.id));
+        Long original=jdbc.queryForObject("select id from academico_matriculas where turma_id=? and aluno_id=?",Long.class,primeira.turma,primeira.aluno.id);
+        String identificador="DEMO-"+unidade("JOQUEI")+"-"+primeira.aluno.id;
+        mvc.perform(get(BASE+"/carteirinha").cookie(primeira.aluno.sessao)).andExpect(status().isOk())
+                .andExpect(jsonPath("$.identificador").value(identificador))
+                .andExpect(jsonPath("$.oficial").value(false))
+                .andExpect(jsonPath("$.aviso").value(org.hamcrest.Matchers.containsString("SEM VALIDADE OFICIAL")))
+                .andExpect(jsonPath("$.cursos.length()").value(2))
+                .andExpect(jsonPath("$.cursos[*].id").value(org.hamcrest.Matchers.containsInAnyOrder((int)primeira.curso,(int)segunda.curso)));
+        mvc.perform(get(BASE+"/carteirinha?alunoId="+primeira.aluno.id).cookie(segunda.aluno.sessao)).andExpect(status().isForbidden());
+        mvc.perform(get(BASE+"/carteirinha?alunoId="+segunda.aluno.id).cookie(primeira.aluno.sessao)).andExpect(status().isForbidden());
+        mvc.perform(get(BASE+"/carteirinha?alunoId="+primeira.aluno.id).cookie(login("admin.teste@clinica.local","REDENCAO"))).andExpect(status().isNotFound());
+        send(a,post(BASE+"/matriculas/"+original+"/cancelar"),Map.of()).andExpect(status().isOk());
+        mvc.perform(get(BASE+"/carteirinha").cookie(primeira.aluno.sessao)).andExpect(status().isOk())
+                .andExpect(jsonPath("$.identificador").value(identificador))
+                .andExpect(jsonPath("$.cursos.length()").value(1))
+                .andExpect(jsonPath("$.cursos[0].id").value(segunda.curso));
+        send(a,post(BASE+"/matriculas/"+extra+"/cancelar"),Map.of()).andExpect(status().isOk());
+        mvc.perform(get(BASE+"/contexto").cookie(primeira.aluno.sessao)).andExpect(status().isOk())
+                .andExpect(jsonPath("$.usuario.perfil").value("ALUNO"));
+        mvc.perform(get(BASE+"/carteirinha").cookie(primeira.aluno.sessao)).andExpect(status().isNotFound());
+        mvc.perform(get(BASE+"/carteirinha").cookie(segunda.aluno.sessao)).andExpect(status().isOk())
+                .andExpect(jsonPath("$.identificador").value("DEMO-"+unidade("JOQUEI")+"-"+segunda.aluno.id))
+                .andExpect(jsonPath("$.cursos.length()").value(1)).andExpect(jsonPath("$.oficial").value(false));
+        assertEquals(2,jdbc.queryForObject("select count(*) from academico_matriculas where aluno_id=? and status='CANCELADA'",Integer.class,primeira.aluno.id));
+        assertEquals(1,jdbc.queryForObject("select count(*) from academico_matriculas where aluno_id=? and status='ATIVA'",Integer.class,segunda.aluno.id));
+    }
     @Test void cancelamentoRevogaConteudoEMantemHistorico() throws Exception {
         Cookie a=admin(); Turma t=turma(a);
         Long m=jdbc.queryForObject("select id from academico_matriculas where turma_id=? and aluno_id=?",Long.class,t.turma,t.aluno.id);
