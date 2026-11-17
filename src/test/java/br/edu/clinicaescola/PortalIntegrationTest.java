@@ -125,6 +125,35 @@ class PortalIntegrationTest {
         send(aluno.sessao,post(BASE+"/financeiro"),Map.of("alunoId",aluno.id,"descricao","Fraude","valor",1,"vencimento","2099-01-01")).andExpect(status().isForbidden());
         send(financeiro.sessao,post(BASE+"/financeiro"),Map.of("alunoId",aluno.id,"descricao","Negativo","valor",-1,"vencimento","2099-01-01")).andExpect(status().isBadRequest());
     }
+    @Test void baixaDemonstrativaExigePerfilEUnidadeSemAlterarExtratoOuAuditoriaNasNegativas() throws Exception {
+        Cookie a=admin(); Turma t=turma(a); Pessoa colega=pessoa(a,"ALUNO"), financeiro=pessoa(a,"FINANCEIRO");
+        long lancamento=create(financeiro.sessao,"/financeiro",Map.of("alunoId",t.aluno.id,"descricao","Parcela fictícia de teste","valor",125.50,"vencimento","2099-12-01"));
+        long outro=create(financeiro.sessao,"/financeiro",Map.of("alunoId",colega.id,"descricao","Parcela fictícia do colega","valor",40,"vencimento","2099-12-01"));
+        String estado=jdbc.queryForObject("select status from academico_financeiro where id=?",String.class,lancamento);
+        Integer auditorias=jdbc.queryForObject("select count(*) from academico_auditoria where entidade='financeiro' and registro_id=?",Integer.class,lancamento);
+        mvc.perform(get(BASE+"/financeiro").cookie(t.aluno.sessao)).andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1)).andExpect(jsonPath("$[0].id").value(lancamento));
+        for(Cookie negado:List.of(t.aluno.sessao,colega.sessao,t.professor.sessao)) {
+            send(negado,post(BASE+"/financeiro/"+lancamento+"/baixa-demonstrativa"),Map.of()).andExpect(status().isForbidden());
+        }
+        Cookie outraUnidade=login("admin.teste@clinica.local","REDENCAO");
+        send(outraUnidade,post(BASE+"/financeiro/"+lancamento+"/baixa-demonstrativa"),Map.of()).andExpect(status().isNotFound());
+        assertEquals(estado,jdbc.queryForObject("select status from academico_financeiro where id=?",String.class,lancamento));
+        assertEquals(auditorias,jdbc.queryForObject("select count(*) from academico_auditoria where entidade='financeiro' and registro_id=?",Integer.class,lancamento));
+        mvc.perform(get(BASE+"/financeiro?alunoId="+colega.id).cookie(t.aluno.sessao)).andExpect(status().isForbidden());
+
+        send(financeiro.sessao,post(BASE+"/financeiro/"+lancamento+"/baixa-demonstrativa"),Map.of()).andExpect(status().isOk());
+        mvc.perform(get(BASE+"/financeiro").cookie(t.aluno.sessao)).andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1)).andExpect(jsonPath("$[0].id").value(lancamento))
+                .andExpect(jsonPath("$[0].status").value("BAIXA_DEMONSTRATIVA"))
+                .andExpect(jsonPath("$[0].demonstrativo").value(true));
+        mvc.perform(get(BASE+"/financeiro").cookie(colega.sessao)).andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1)).andExpect(jsonPath("$[0].id").value(outro))
+                .andExpect(jsonPath("$[0].status").value(estado));
+        assertEquals("BAIXA_DEMONSTRATIVA",jdbc.queryForObject("select status from academico_financeiro where id=?",String.class,lancamento));
+        assertEquals(1,jdbc.queryForObject("select count(*) from academico_auditoria where entidade='financeiro' and registro_id=? and acao='BAIXA_DEMONSTRATIVA' and ator_id=? and unidade_id=?",Integer.class,lancamento,financeiro.id,unidade("JOQUEI")));
+        assertEquals(auditorias+1,jdbc.queryForObject("select count(*) from academico_auditoria where entidade='financeiro' and registro_id=?",Integer.class,lancamento));
+    }
     @Test void lotacaoDaTurmaESenhaFracaNaoPassam() throws Exception {
         Cookie a=admin(); Turma t=turma(a); Pessoa outro=pessoa(a,"ALUNO");
         send(a,put(BASE+"/turmas/"+t.turma),Map.of("disciplinaId",t.disciplina,"professorId",t.professor.id,"nome","Turma lotada "+UUID.randomUUID(),"periodo","2026.2","vagas",1)).andExpect(status().isOk());
@@ -155,6 +184,168 @@ class PortalIntegrationTest {
         String audit=mvc.perform(get(BASE+"/auditoria").cookie(a)).andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
         assertFalse(audit.contains(SENHA)); assertFalse(audit.contains("senha_hash"));
         mvc.perform(get(BASE+"/aulas?turmaId=nao-numerico").cookie(a)).andExpect(status().isBadRequest());
+    }
+    @Test void alunoSemVinculoComUnidadeNaoRecebeNovaMatricula() throws Exception {
+        Cookie a=admin(); Turma t=turma(a); Pessoa outro=pessoa(a,"ALUNO");
+        jdbc.update("delete from usuarios_unidades where usuario_id=? and unidade_id=?",outro.id,unidade("JOQUEI"));
+        send(a,post(BASE+"/matriculas"),Map.of("turmaId",t.turma,"alunoId",outro.id))
+                .andExpect(status().isNotFound());
+        assertEquals(0,jdbc.queryForObject("select count(*) from academico_matriculas where turma_id=? and aluno_id=?",Integer.class,t.turma,outro.id));
+        mvc.perform(get(BASE+"/turmas").cookie(outro.sessao)).andExpect(status().isUnauthorized());
+    }
+    @Test void cancelamentoDeMatriculaImpedeEntregaSemApagarEntregaAnterior() throws Exception {
+        Cookie a=admin(); Turma t=turma(a);
+        long anterior=create(t.professor.sessao,"/atividades",Map.of("turmaId",t.turma,"titulo","Antes do cancelamento","instrucoes","Responder","prazo","2099-12-31T23:59:00Z"));
+        long pendente=create(t.professor.sessao,"/atividades",Map.of("turmaId",t.turma,"titulo","Após cancelamento","instrucoes","Responder","prazo","2099-12-31T23:59:00Z"));
+        long entrega=create(t.aluno.sessao,"/entregas",Map.of("atividadeId",anterior,"conteudo","Histórico preservado"));
+        Long matricula=jdbc.queryForObject("select id from academico_matriculas where turma_id=? and aluno_id=?",Long.class,t.turma,t.aluno.id);
+        send(a,post(BASE+"/matriculas/"+matricula+"/cancelar"),Map.of()).andExpect(status().isOk());
+
+        // A sessão continua válida; quem foi revogado é o vínculo acadêmico.
+        mvc.perform(get(BASE+"/contexto").cookie(t.aluno.sessao)).andExpect(status().isOk());
+        send(t.aluno.sessao,post(BASE+"/entregas"),Map.of("atividadeId",pendente,"conteudo","Envio não autorizado"))
+                .andExpect(status().isForbidden());
+        assertEquals(0,jdbc.queryForObject("select count(*) from academico_entregas where atividade_id=? and aluno_id=?",Integer.class,pendente,t.aluno.id));
+        assertEquals("Histórico preservado",jdbc.queryForObject("select conteudo from academico_entregas where id=?",String.class,entrega));
+        mvc.perform(get(BASE+"/entregas?atividadeId="+anterior).cookie(t.aluno.sessao)).andExpect(status().isForbidden());
+        mvc.perform(get(BASE+"/entregas").cookie(t.aluno.sessao)).andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(0));
+        mvc.perform(get(BASE+"/entregas?atividadeId="+anterior).cookie(t.professor.sessao))
+                .andExpect(status().isOk()).andExpect(jsonPath("$[0].id").value(entrega));
+    }
+    @Test void professorComPerfilRevogadoNaoAlteraNotaPublicadaNaMesmaSessao() throws Exception {
+        Cookie a=admin(); Turma t=turma(a);
+        long atividade=create(t.professor.sessao,"/atividades",Map.of("turmaId",t.turma,"titulo","Avaliação antes da revogação","instrucoes","Responder","prazo","2099-12-31T23:59:00Z"));
+        long entrega=create(t.aluno.sessao,"/entregas",Map.of("atividadeId",atividade,"conteudo","Resposta preservada"));
+        send(t.professor.sessao,put(BASE+"/entregas/"+entrega+"/avaliacao"),Map.of("nota",8.5,"feedback","Avaliação original","publicada",true)).andExpect(status().isOk());
+        jdbc.update("update academico_perfis set perfil='ALUNO' where usuario_id=? and unidade_id=?",t.professor.id,unidade("JOQUEI"));
+
+        mvc.perform(get(BASE+"/contexto").cookie(t.professor.sessao)).andExpect(status().isOk())
+                .andExpect(jsonPath("$.usuario.perfil").value("ALUNO"));
+        send(t.professor.sessao,put(BASE+"/entregas/"+entrega+"/avaliacao"),Map.of("nota",1,"feedback","Alteração não autorizada","publicada",false))
+                .andExpect(status().isForbidden());
+        assertEquals(8.5,jdbc.queryForObject("select nota from academico_entregas where id=?",Double.class,entrega));
+        assertEquals("Avaliação original",jdbc.queryForObject("select feedback from academico_entregas where id=?",String.class,entrega));
+        assertEquals(Boolean.TRUE,jdbc.queryForObject("select publicada from academico_entregas where id=?",Boolean.class,entrega));
+        mvc.perform(get(BASE+"/boletim").cookie(t.aluno.sessao)).andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].nota").value(8.5)).andExpect(jsonPath("$[0].turma_id").value(t.turma));
+    }
+    @Test void trocaDeDocenteRevogaAvaliacaoAnteriorEPreservaHistoricoParaNovoProfessor() throws Exception {
+        Cookie a=admin(); Turma t=turma(a); Pessoa novo=pessoa(a,"PROFESSOR");
+        long atividade=create(t.professor.sessao,"/atividades",Map.of("turmaId",t.turma,"titulo","Troca de docente","instrucoes","Responder","prazo","2099-12-31T23:59:00Z"));
+        long entrega=create(t.aluno.sessao,"/entregas",Map.of("atividadeId",atividade,"conteudo","Histórico da turma"));
+        send(t.professor.sessao,put(BASE+"/entregas/"+entrega+"/avaliacao"),Map.of("nota",8.5,"feedback","Avaliação preservada","publicada",true)).andExpect(status().isOk());
+        send(a,put(BASE+"/turmas/"+t.turma),Map.of("disciplinaId",t.disciplina,"professorId",novo.id,"nome","Turma reatribuída "+UUID.randomUUID(),"periodo","2026.2","vagas",30)).andExpect(status().isOk());
+
+        // O perfil e a sessão permanecem válidos; somente a responsabilidade pela turma mudou via API.
+        mvc.perform(get(BASE+"/contexto").cookie(t.professor.sessao)).andExpect(status().isOk())
+                .andExpect(jsonPath("$.usuario.perfil").value("PROFESSOR"));
+        mvc.perform(get(BASE+"/entregas?atividadeId="+atividade).cookie(t.professor.sessao)).andExpect(status().isForbidden());
+        send(t.professor.sessao,put(BASE+"/entregas/"+entrega+"/avaliacao"),Map.of("nota",1,"feedback","Intrusão após troca","publicada",false)).andExpect(status().isForbidden());
+        assertEquals(8.5,jdbc.queryForObject("select nota from academico_entregas where id=?",Double.class,entrega));
+        assertEquals("Avaliação preservada",jdbc.queryForObject("select feedback from academico_entregas where id=?",String.class,entrega));
+        assertEquals(Boolean.TRUE,jdbc.queryForObject("select publicada from academico_entregas where id=?",Boolean.class,entrega));
+        mvc.perform(get(BASE+"/entregas?atividadeId="+atividade).cookie(novo.sessao)).andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(entrega)).andExpect(jsonPath("$[0].conteudo").value("Histórico da turma"));
+        send(novo.sessao,put(BASE+"/entregas/"+entrega+"/avaliacao"),Map.of("nota",9,"feedback","Revisão pelo novo docente","publicada",true)).andExpect(status().isOk());
+        mvc.perform(get(BASE+"/boletim").cookie(t.aluno.sessao)).andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].nota").value(9)).andExpect(jsonPath("$[0].turma_id").value(t.turma));
+        assertEquals(9.0,jdbc.queryForObject("select nota from academico_entregas where id=?",Double.class,entrega));
+    }
+    @Test void retirarPublicacaoOcultaNotaNaMesmaSessaoSemApagarAvaliacao() throws Exception {
+        Cookie a=admin(); Turma t=turma(a);
+        long atividade=create(t.professor.sessao,"/atividades",Map.of("turmaId",t.turma,"titulo","Revisão de publicação","instrucoes","Responder","prazo","2099-12-31T23:59:00Z"));
+        long entrega=create(t.aluno.sessao,"/entregas",Map.of("atividadeId",atividade,"conteudo","Resposta preservada"));
+        send(t.professor.sessao,put(BASE+"/entregas/"+entrega+"/avaliacao"),Map.of("nota",8.5,"feedback","Avaliação para revisão","publicada",true)).andExpect(status().isOk());
+        mvc.perform(get(BASE+"/boletim").cookie(t.aluno.sessao)).andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(entrega)).andExpect(jsonPath("$[0].nota").value(8.5));
+        mvc.perform(get(BASE+"/entregas?atividadeId="+atividade).cookie(t.aluno.sessao)).andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].nota").value(8.5)).andExpect(jsonPath("$[0].feedback").value("Avaliação para revisão"));
+
+        send(t.professor.sessao,put(BASE+"/entregas/"+entrega+"/avaliacao"),Map.of("nota",8.5,"feedback","Avaliação para revisão","publicada",false)).andExpect(status().isOk());
+        // Reutiliza a sessão que já tinha consultado a nota publicada.
+        mvc.perform(get(BASE+"/boletim").cookie(t.aluno.sessao)).andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(0));
+        for(String rota:List.of("/entregas","/entregas?atividadeId="+atividade))
+            mvc.perform(get(BASE+rota).cookie(t.aluno.sessao)).andExpect(status().isOk())
+                    .andExpect(jsonPath("$[0].id").value(entrega)).andExpect(jsonPath("$[0].conteudo").value("Resposta preservada"))
+                    .andExpect(jsonPath("$[0].publicada").value(false)).andExpect(jsonPath("$[0].nota").doesNotExist())
+                    .andExpect(jsonPath("$[0].feedback").doesNotExist());
+        assertEquals(8.5,jdbc.queryForObject("select nota from academico_entregas where id=?",Double.class,entrega));
+        assertEquals("Avaliação para revisão",jdbc.queryForObject("select feedback from academico_entregas where id=?",String.class,entrega));
+        assertEquals(Boolean.FALSE,jdbc.queryForObject("select publicada from academico_entregas where id=?",Boolean.class,entrega));
+        mvc.perform(get(BASE+"/entregas?atividadeId="+atividade).cookie(t.professor.sessao)).andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].nota").value(8.5)).andExpect(jsonPath("$[0].feedback").value("Avaliação para revisão"));
+
+        send(t.professor.sessao,put(BASE+"/entregas/"+entrega+"/avaliacao"),Map.of("nota",9,"feedback","Revisão publicada","publicada",true)).andExpect(status().isOk());
+        mvc.perform(get(BASE+"/boletim").cookie(t.aluno.sessao)).andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(entrega)).andExpect(jsonPath("$[0].nota").value(9))
+                .andExpect(jsonPath("$[0].feedback").value("Revisão publicada"));
+        mvc.perform(get(BASE+"/entregas?atividadeId="+atividade).cookie(t.aluno.sessao)).andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].publicada").value(true)).andExpect(jsonPath("$[0].nota").value(9))
+                .andExpect(jsonPath("$[0].feedback").value("Revisão publicada"));
+        assertEquals(9.0,jdbc.queryForObject("select nota from academico_entregas where id=?",Double.class,entrega));
+    }
+    @Test void colegasDaMesmaTurmaRecebemSomenteSuasEntregasENotas() throws Exception {
+        Cookie a=admin(); Turma t=turma(a); Pessoa colega=pessoa(a,"ALUNO");
+        create(a,"/matriculas",Map.of("turmaId",t.turma,"alunoId",colega.id));
+        long atividade=create(t.professor.sessao,"/atividades",Map.of("turmaId",t.turma,"titulo","Isolamento na mesma turma","instrucoes","Resposta individual","prazo","2099-12-31T23:59:00Z"));
+        long primeira=create(t.aluno.sessao,"/entregas",Map.of("atividadeId",atividade,"conteudo","Resposta privada A"));
+        long segunda=create(colega.sessao,"/entregas",Map.of("atividadeId",atividade,"conteudo","Resposta privada B"));
+        send(t.professor.sessao,put(BASE+"/entregas/"+primeira+"/avaliacao"),Map.of("nota",8.5,"feedback","Feedback privado A","publicada",true)).andExpect(status().isOk());
+        send(t.professor.sessao,put(BASE+"/entregas/"+segunda+"/avaliacao"),Map.of("nota",6,"feedback","Feedback privado B","publicada",true)).andExpect(status().isOk());
+
+        // Ambos têm matrícula na MESMA turma: o filtro deve isolar a pessoa, não só a turma.
+        Pessoa[] alunos={t.aluno,colega}; long[] ids={primeira,segunda}; double[] notas={8.5,6};
+        String[] respostas={"Resposta privada A","Resposta privada B"};
+        String[] feedbacks={"Feedback privado A","Feedback privado B"};
+        for(int i=0;i<alunos.length;i++) {
+            for(String rota:List.of("/entregas","/entregas?atividadeId="+atividade))
+                mvc.perform(get(BASE+rota).cookie(alunos[i].sessao)).andExpect(status().isOk())
+                        .andExpect(jsonPath("$.length()").value(1)).andExpect(jsonPath("$[0].id").value(ids[i]))
+                        .andExpect(jsonPath("$[0].conteudo").value(respostas[i])).andExpect(jsonPath("$[0].nota").value(notas[i]))
+                        .andExpect(jsonPath("$[0].feedback").value(feedbacks[i]));
+            mvc.perform(get(BASE+"/boletim").cookie(alunos[i].sessao)).andExpect(status().isOk())
+                    .andExpect(jsonPath("$.length()").value(1)).andExpect(jsonPath("$[0].id").value(ids[i]))
+                    .andExpect(jsonPath("$[0].nota").value(notas[i])).andExpect(jsonPath("$[0].feedback").value(feedbacks[i]));
+            mvc.perform(get(BASE+"/boletim?alunoId="+alunos[1-i].id).cookie(alunos[i].sessao)).andExpect(status().isForbidden());
+            send(alunos[i].sessao,put(BASE+"/entregas/"+ids[1-i]+"/avaliacao"),Map.of("nota",0,"feedback","Intrusão","publicada",false)).andExpect(status().isForbidden());
+        }
+        mvc.perform(get(BASE+"/entregas?atividadeId="+atividade).cookie(t.professor.sessao)).andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(2));
+        for(int i=0;i<ids.length;i++) {
+            assertEquals(notas[i],jdbc.queryForObject("select nota from academico_entregas where id=?",Double.class,ids[i]));
+            assertEquals(feedbacks[i],jdbc.queryForObject("select feedback from academico_entregas where id=?",String.class,ids[i]));
+            assertEquals(Boolean.TRUE,jdbc.queryForObject("select publicada from academico_entregas where id=?",Boolean.class,ids[i]));
+            assertEquals(respostas[i],jdbc.queryForObject("select conteudo from academico_entregas where id=?",String.class,ids[i]));
+        }
+    }
+    @Test void carteirinhaRefleteSomenteCursosAtivosNaMesmaSessaoSemExporColega() throws Exception {
+        Cookie a=admin(); Turma primeira=turma(a), segunda=turma(a);
+        long extra=create(a,"/matriculas",Map.of("turmaId",segunda.turma,"alunoId",primeira.aluno.id));
+        Long original=jdbc.queryForObject("select id from academico_matriculas where turma_id=? and aluno_id=?",Long.class,primeira.turma,primeira.aluno.id);
+        String identificador="DEMO-"+unidade("JOQUEI")+"-"+primeira.aluno.id;
+        mvc.perform(get(BASE+"/carteirinha").cookie(primeira.aluno.sessao)).andExpect(status().isOk())
+                .andExpect(jsonPath("$.identificador").value(identificador))
+                .andExpect(jsonPath("$.oficial").value(false))
+                .andExpect(jsonPath("$.aviso").value(org.hamcrest.Matchers.containsString("SEM VALIDADE OFICIAL")))
+                .andExpect(jsonPath("$.cursos.length()").value(2))
+                .andExpect(jsonPath("$.cursos[*].id").value(org.hamcrest.Matchers.containsInAnyOrder((int)primeira.curso,(int)segunda.curso)));
+        mvc.perform(get(BASE+"/carteirinha?alunoId="+primeira.aluno.id).cookie(segunda.aluno.sessao)).andExpect(status().isForbidden());
+        mvc.perform(get(BASE+"/carteirinha?alunoId="+segunda.aluno.id).cookie(primeira.aluno.sessao)).andExpect(status().isForbidden());
+        mvc.perform(get(BASE+"/carteirinha?alunoId="+primeira.aluno.id).cookie(login("admin.teste@clinica.local","REDENCAO"))).andExpect(status().isNotFound());
+        send(a,post(BASE+"/matriculas/"+original+"/cancelar"),Map.of()).andExpect(status().isOk());
+        mvc.perform(get(BASE+"/carteirinha").cookie(primeira.aluno.sessao)).andExpect(status().isOk())
+                .andExpect(jsonPath("$.identificador").value(identificador))
+                .andExpect(jsonPath("$.cursos.length()").value(1))
+                .andExpect(jsonPath("$.cursos[0].id").value(segunda.curso));
+        send(a,post(BASE+"/matriculas/"+extra+"/cancelar"),Map.of()).andExpect(status().isOk());
+        mvc.perform(get(BASE+"/contexto").cookie(primeira.aluno.sessao)).andExpect(status().isOk())
+                .andExpect(jsonPath("$.usuario.perfil").value("ALUNO"));
+        mvc.perform(get(BASE+"/carteirinha").cookie(primeira.aluno.sessao)).andExpect(status().isNotFound());
+        mvc.perform(get(BASE+"/carteirinha").cookie(segunda.aluno.sessao)).andExpect(status().isOk())
+                .andExpect(jsonPath("$.identificador").value("DEMO-"+unidade("JOQUEI")+"-"+segunda.aluno.id))
+                .andExpect(jsonPath("$.cursos.length()").value(1)).andExpect(jsonPath("$.oficial").value(false));
+        assertEquals(2,jdbc.queryForObject("select count(*) from academico_matriculas where aluno_id=? and status='CANCELADA'",Integer.class,primeira.aluno.id));
+        assertEquals(1,jdbc.queryForObject("select count(*) from academico_matriculas where aluno_id=? and status='ATIVA'",Integer.class,segunda.aluno.id));
     }
     @Test void cancelamentoRevogaConteudoEMantemHistorico() throws Exception {
         Cookie a=admin(); Turma t=turma(a);
