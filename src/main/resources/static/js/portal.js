@@ -456,6 +456,42 @@
       }[current] || []
     );
   }
+  function gradeBoard(list) {
+    const fmt = new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 2 }),
+      tier = (n) => (n >= 7 ? "good" : n >= 5 ? "mid" : "low"),
+      initials = (name) =>
+        String(name || "?")
+          .replace(/\bDEMO\b/gi, "")
+          .trim()
+          .split(/\s+/)
+          .filter(Boolean)
+          .slice(0, 2)
+          .map((w) => w[0])
+          .join("")
+          .toUpperCase(),
+      groups = new Map();
+    list.forEach((r) => {
+      const k = [r.turma_nome, r.disciplina_nome, r.atividade_titulo].join("|");
+      if (!groups.has(k)) groups.set(k, []);
+      groups.get(k).push(r);
+    });
+    return `<div class="grade-board">${[...groups.values()]
+      .map((items) => {
+        items.sort((x, y) =>
+          String(x.aluno_nome).localeCompare(String(y.aluno_nome), "pt-BR"),
+        );
+        const g = items[0],
+          fb = (r) => r.feedback || "Sem observações.",
+          shared = items.every((r) => fb(r) === fb(g)) && items.length > 1;
+        return `<article class="grade-group"><header class="grade-group-head"><div><span class="grade-subject">${esc(g.disciplina_nome)}</span><small>${esc(g.turma_nome)} · ${esc(g.periodo)}</small></div><div class="grade-group-side"><span class="grade-activity" title="${esc(g.atividade_titulo)}">${esc(g.atividade_titulo)}</span><span class="grade-count">${items.length} ${items.length === 1 ? "avaliação" : "avaliações"}</span></div></header>${shared ? `<p class="grade-feedback grade-feedback--shared"><span>Devolutiva da atividade</span>${esc(fb(g))}</p>` : ""}<ul class="grade-list">${items
+          .map((r) => {
+            const n = Number(r.nota);
+            return `<li class="grade-row grade-row--${tier(n)}"><span class="grade-avatar" aria-hidden="true">${esc(initials(r.aluno_nome))}</span><div class="grade-student"><strong>${esc(r.aluno_nome)}</strong>${shared ? "" : `<p class="grade-feedback">${esc(fb(r))}</p>`}</div><div class="grade-meter" aria-hidden="true"><span style="width:${Math.max(0, Math.min(100, n * 10))}%"></span></div><div class="grade-score" aria-label="Nota ${esc(fmt.format(n))} de 10"><strong>${esc(fmt.format(n))}</strong><small>/10</small></div></li>`;
+          })
+          .join("")}</ul></article>`;
+      })
+      .join("")}</div>`;
+  }
   function drawTable() {
     const cols = columns();
     let list = rows.filter((r) =>
@@ -466,11 +502,12 @@
     );
     if (current === "financeiro")
       list = list.filter((r) => r.status === financeFilter);
-    const pages = Math.max(1, Math.ceil(list.length / 12));
+    const size = current === "boletim" ? 24 : 12;
+    const pages = Math.max(1, Math.ceil(list.length / size));
     page = Math.min(Math.max(1, page), pages);
-    const slice = list.slice((page - 1) * 12, page * 12);
+    const slice = list.slice((page - 1) * size, page * size);
     $("#table-results").innerHTML = list.length
-      ? `<div class="table-wrap"><table><thead><tr>${cols.map(([label]) => `<th scope="col">${esc(label || "Ações")}</th>`).join("")}</tr></thead><tbody>${slice.map((r) => `<tr>${cols.map(([, render]) => `<td>${render(r)}</td>`).join("")}</tr>`).join("")}</tbody></table></div><div class="pagination"><span>${list.length} ${list.length === 1 ? "registro" : "registros"} · página ${page} de ${pages}</span><div><button class="btn small" data-page="${page - 1}" ${page === 1 ? "disabled" : ""} aria-label="Página anterior">←</button><button class="btn small" data-page="${page + 1}" ${page === pages ? "disabled" : ""} aria-label="Próxima página">→</button></div></div>`
+      ? `${current === "boletim" ? gradeBoard(slice) : `<div class="table-wrap"><table><thead><tr>${cols.map(([label]) => `<th scope="col">${esc(label || "Ações")}</th>`).join("")}</tr></thead><tbody>${slice.map((r) => `<tr>${cols.map(([, render]) => `<td>${render(r)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`}<div class="pagination"><span>${list.length} ${list.length === 1 ? "registro" : "registros"} · página ${page} de ${pages}</span><div><button class="btn small" data-page="${page - 1}" ${page === 1 ? "disabled" : ""} aria-label="Página anterior">←</button><button class="btn small" data-page="${page + 1}" ${page === pages ? "disabled" : ""} aria-label="Próxima página">→</button></div></div>`
       : empty(
           query
             ? "Nenhum resultado para esta busca."
