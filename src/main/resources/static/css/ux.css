@@ -879,3 +879,48 @@ html[data-theme="dark"] :is(.experience-footer, .workspace-footer) button {
     display: none !important;
   }
 }
+
+/* Modo noturno: cartões de atalho, galeria, painel de estudo e textos longos */
+html[data-theme="dark"] :is(.quick-link, .gallery) {
+  background: var(--surface);
+  color: var(--ink);
+  border-color: var(--line);
+}
+html[data-theme="dark"] .quick-link:hover {
+  background: var(--surface-raised);
+  border-color: #4d6a96;
+  box-shadow: 0 12px 25px #0006;
+}
+html[data-theme="dark"] .quick-link strong {
+  color: var(--ink);
+}
+html[data-theme="dark"] .quick-link small {
+  color: var(--muted);
+}
+html[data-theme="dark"] .quick-arrow {
+  color: #8fa6c6;
+}
+html[data-theme="dark"] .quick-icon {
+  background: var(--blue-soft);
+  color: var(--blue);
+}
+html[data-theme="dark"] .quick-link:nth-child(2) .quick-icon {
+  background: #3d3214;
+  color: var(--amber);
+}
+html[data-theme="dark"] .quick-link:nth-child(3) .quick-icon {
+  background: #163a30;
+  color: var(--green);
+}
+html[data-theme="dark"] .study-panel {
+  background: var(--surface-raised);
+}
+html[data-theme="dark"] .study-copy .eyebrow {
+  color: var(--blue);
+}
+html[data-theme="dark"] :is(.study-copy h2, .gallery-caption h3) {
+  color: var(--ink);
+}
+html[data-theme="dark"] .prose {
+  color: #c9d5e6;
+}
