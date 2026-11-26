@@ -307,25 +307,54 @@ window.PortalServices = (() => {
       "Domingo",
     ],
   ) {
-    return data.length
-      ? `<div class="schedule-scroll" tabindex="0" role="region" aria-label="Grade semanal: role horizontalmente para ver todos os dias"><div class="schedule-grid">${names
-          .map(
-            (name, i) =>
-              `<section class="schedule-day"><h2>${name}</h2>${
-                data
-                  .filter((r) => Number(r.dia) === i + 1)
-                  .map(
-                    (r) =>
-                      `<article class="schedule-slot"><small>${esc(String(r.inicio).slice(0, 5))} – ${esc(String(r.fim).slice(0, 5))}</small><strong>${esc(r.disciplina_nome)}</strong><small>${esc(r.professor_nome)}</small><small>${esc(r.sala || "Sala não informada")} · ${esc(r.periodo)}</small>${manager() ? button("cancel-schedule", "Desativar", r.id, "small") : ""}</article>`,
-                  )
-                  .join("") || '<small class="muted">Sem horários</small>'
-              }</section>`,
-          )
-          .join("")}</div></div>`
-      : empty(
-          "Sem horários cadastrados.",
-          "A gestão precisa informar os dias e horários das turmas. Nenhuma grade é inferida a partir do vídeo.",
+    if (!data.length)
+      return empty(
+        "Sem horários cadastrados.",
+        "A gestão precisa informar os dias e horários das turmas. Nenhuma grade é inferida a partir do vídeo.",
+      );
+    const hhmm = (v) => String(v || "").slice(0, 5),
+      slotKey = (r) => hhmm(r.inicio) + "|" + hhmm(r.fim),
+      hue = (t) =>
+        [...String(t || "")].reduce((h, c) => (h * 31 + c.charCodeAt(0)) % 360, 210),
+      days = names
+        .map((name, i) => ({
+          name,
+          items: data.filter((r) => Number(r.dia) === i + 1),
+          weekend: i > 4,
+        }))
+        .filter((d) => !d.weekend || d.items.length),
+      slots = [...new Set(data.map(slotKey))].sort(),
+      cols = days
+        .map((d) => (d.items.length ? "minmax(170px, 1fr)" : "minmax(68px, 0.32fr)"))
+        .join(" "),
+      card = (r) =>
+        `<article class="schedule-slot" style="--slot-hue:${hue(r.disciplina_nome)}"><span class="schedule-slot-time">${esc(hhmm(r.inicio))} – ${esc(hhmm(r.fim))}</span><strong title="${esc(r.disciplina_nome)}">${esc(r.disciplina_nome)}</strong><span class="schedule-slot-prof" title="${esc(r.professor_nome)}">${esc(r.professor_nome)}</span><span class="schedule-slot-tags"><span>${esc(r.sala || "Sala não informada")}</span><span>${esc(r.periodo)}</span></span>${manager() ? button("cancel-schedule", "Desativar", r.id, "small") : ""}</article>`,
+      at = (row, col, span = 1) =>
+        `style="grid-row:${row} / span ${span};grid-column:${col}"`;
+    const times = slots
+      .map((s, i) => {
+        const [ini, fim] = s.split("|");
+        return `<div class="schedule-time" ${at(i + 2, 1)}><strong>${esc(ini)}</strong><small>até ${esc(fim)}</small></div>`;
+      })
+      .join("");
+    const columns = days
+      .map((d, c) => {
+        const col = c + 2,
+          head = `<div class="schedule-head${d.items.length ? "" : " is-free"}" ${at(1, col)}><span>${esc(d.name)}</span><small>${d.items.length ? d.items.length + (d.items.length > 1 ? " aulas" : " aula") : "Livre"}</small></div>`;
+        if (!d.items.length)
+          return head + `<div class="schedule-free" ${at(2, col, slots.length)}><span>Sem aulas</span></div>`;
+        return (
+          head +
+          slots
+            .map((s, i) => {
+              const its = d.items.filter((r) => slotKey(r) === s);
+              return `<div class="schedule-cell${its.length ? "" : " is-empty"}" ${at(i + 2, col)}>${its.map(card).join("")}</div>`;
+            })
+            .join("")
         );
+      })
+      .join("");
+    return `<div class="schedule-scroll" tabindex="0" role="region" aria-label="Grade semanal de horários"><div class="schedule-board" style="--schedule-cols:${cols}"><div class="schedule-corner" ${at(1, 1)}>Horário</div>${times}${columns}</div></div>`;
   }
   function calendar(data) {
     cache.events = data;
